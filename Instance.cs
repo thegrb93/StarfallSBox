@@ -3,12 +3,13 @@ using System.Collections.Generic;
 using System.CodeDom.Compiler;
 using Microsoft.CSharp;
 using System.Reflection;
+using MoonSharp.Interpreter;
 
 namespace Starfall
 {
     public class Player { }
     public class Entity { }
-    public class InstanceHook { },  public class UserHook { }
+    public class InstanceHook { }  public class UserHook { }
 
     public class StarfallCompileException : Exception
     {
@@ -24,9 +25,10 @@ namespace Starfall
         public static List<Instance> activeInstances = new List<Instance>();
         public static Dictionary<Player, List<Instance>> playerInstances = new Dictionary<Player, List<Instance>>();
 
-        StarfallData data_;
-        Player player_;
-        Entity entity_;
+        StarfallData data;
+        Player player;
+        Entity entity;
+        Script luaInstance;
 
         Dictionary<string, List<InstanceHook>> hooks = new Dictionary<string, List<InstanceHook>>();
         Dictionary<string, List<UserHook>> userhooks = new Dictionary<string, List<UserHook>>();
@@ -34,14 +36,17 @@ namespace Starfall
 
         public Instance(StarfallData data, Player player, Entity entity)
         {
-            data_ = data;
-            player_ = player;
-            entity_ = entity;
+            this.data = data;
+            this.player = player;
+            this.entity = entity;
         }
 
         public bool Compile()
         {
-            CSharpCodeProvider codeProvider = new CSharpCodeProvider();
+            luaInstance = new Script();
+            DynValue result = luaInstance.DoString(this.data.files[this.data.mainfile]);
+
+            /*CSharpCodeProvider codeProvider = new CSharpCodeProvider();
             CompilerParameters compileParam = new CompilerParameters();
             compileParam.GenerateExecutable = false;
             compileParam.OutputAssembly = "SFScript";
@@ -67,7 +72,7 @@ namespace Starfall
             {
                 throw new StarfallCompileException("Failed to find Main method", results.Errors);
             }
-            methodInfo.Invoke(null, null);
+            methodInfo.Invoke(null, null);*/
 
             return true;
         }
