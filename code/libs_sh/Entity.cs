@@ -1,7 +1,6 @@
 ﻿using MoonSharp.Interpreter;
-using System;
 using System.Collections.Generic;
-using System.Text;
+using Sandbox;
 
 namespace Starfall
 {
@@ -21,7 +20,7 @@ namespace Starfall
 
         public List<double> getPos()
         {
-            Vector v = ent.GetPos();
+            Vector3 v = ent.Position;
             return new List<double> {v.x, v.y, v.z};
         }
     }

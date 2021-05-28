@@ -1,5 +1,4 @@
 ﻿using Sandbox;
-using Sandbox.Joints;
 
 [Library( "starfall_prop" )]
 public partial class StarfallProp : Prop

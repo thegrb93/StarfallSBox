@@ -1,5 +1,4 @@
 ﻿using Sandbox;
-using Sandbox.Joints;
 
 [Library( "starfall_hologram" )]
 public partial class StarfallHologram : Prop

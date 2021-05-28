@@ -1,0 +1,19 @@
+{
+	"name": "starfall",
+	"version": "1.0",
+	"sharedassets": "*.*",
+	
+	"depends": 
+	[
+		"sandbox",
+	],
+	
+	"gamemodes":
+	[
+		{
+			"name": "starfall",
+			"title": "Sandbox with starfall",
+			"description": ""
+		}
+	]
+}

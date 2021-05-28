@@ -1,22 +1,16 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.CodeDom.Compiler;
-using Microsoft.CSharp;
-using System.Reflection;
 using MoonSharp.Interpreter;
+using Sandbox;
 
 namespace Starfall
 {
-    public class Player { }
-    public class Entity { }
     public class InstanceHook { }  public class UserHook { }
 
     public class StarfallCompileException : Exception
     {
-        public CompilerErrorCollection errors;
-        public StarfallCompileException(string message, CompilerErrorCollection errors) : base(message)
+        public StarfallCompileException(string message) : base(message)
         {
-            this.errors = errors;
         }
     }
 
@@ -43,36 +37,8 @@ namespace Starfall
 
         public bool Compile()
         {
-            luaInstance = new Script();
-            DynValue result = luaInstance.DoString(this.data.files[this.data.mainfile]);
-
-            /*CSharpCodeProvider codeProvider = new CSharpCodeProvider();
-            CompilerParameters compileParam = new CompilerParameters();
-            compileParam.GenerateExecutable = false;
-            compileParam.OutputAssembly = "SFScript";
-
-            string[] files = new string[data_.files.Count];
-            data_.files.Values.CopyTo(files, 0);
-
-            CompilerResults results = codeProvider.CompileAssemblyFromSource(compileParam, files);
-            if (results.Errors.Count > 0)
-            {
-                throw new StarfallCompileException("Compilation failed", results.Errors);
-            }
-
-            Assembly asm = results.CompiledAssembly;
-            Type t = asm.GetType("SF.Main");
-            if (t == null)
-            {
-                throw new StarfallCompileException("Missing SF.Main class", results.Errors);
-            }
-
-            MethodInfo methodInfo = t.GetMethod("Main", BindingFlags.Public | BindingFlags.Static);
-            if (methodInfo == null)
-            {
-                throw new StarfallCompileException("Failed to find Main method", results.Errors);
-            }
-            methodInfo.Invoke(null, null);*/
+            this.luaInstance = new Script();
+            DynValue result = this.luaInstance.DoString(this.data.files[this.data.mainfile]);
 
             return true;
         }
