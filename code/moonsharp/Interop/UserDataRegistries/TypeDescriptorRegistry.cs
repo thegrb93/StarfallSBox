@@ -170,16 +170,6 @@ namespace MoonSharp.Interpreter.Interop.UserDataRegistries
 					else
 					{
 						StandardUserDataDescriptor udd = new StandardUserDataDescriptor(type, accessMode, friendlyName);
-
-						if (accessMode == InteropAccessMode.BackgroundOptimized)
-						{
-#if NETFX_CORE
-							System.Threading.Tasks.Task.Run(() => ((IOptimizableDescriptor)udd).Optimize());
-#else
-							ThreadPool.QueueUserWorkItem(o => ((IOptimizableDescriptor)udd).Optimize());
-#endif
-						}
-
 						return PerformRegistration(type, udd, oldDescriptor);
 					}
 				}

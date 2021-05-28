@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Linq.Expressions;
 using System.Reflection;
 using System.Threading;
 using MoonSharp.Interpreter.Compatibility;
@@ -12,7 +11,7 @@ namespace MoonSharp.Interpreter.Interop
 	/// <summary>
 	/// Class providing easier marshalling of CLR properties
 	/// </summary>
-	public class PropertyMemberDescriptor : IMemberDescriptor, IOptimizableDescriptor,
+	public class PropertyMemberDescriptor : IMemberDescriptor,
 		IWireableDescriptor
 	{
 		/// <summary>
@@ -48,8 +47,6 @@ namespace MoonSharp.Interpreter.Interop
 
 
 		private MethodInfo m_Getter, m_Setter;
-		Func<object, object> m_OptimizedGetter = null;
-		Action<object, object> m_OptimizedSetter = null;
 
 
 		/// <summary>
@@ -126,12 +123,6 @@ namespace MoonSharp.Interpreter.Interop
 			m_Setter = setter;
 
 			this.IsStatic = (m_Getter ?? m_Setter).IsStatic;
-
-			if (AccessMode == InteropAccessMode.Preoptimized)
-			{
-				this.OptimizeGetter();
-				this.OptimizeSetter();
-			}
 		}
 
 
@@ -148,75 +139,7 @@ namespace MoonSharp.Interpreter.Interop
 			if (m_Getter == null)
 				throw new ScriptRuntimeException("userdata property '{0}.{1}' cannot be read from.", this.PropertyInfo.DeclaringType.Name, this.Name);
 
-			if (AccessMode == InteropAccessMode.LazyOptimized && m_OptimizedGetter == null)
-				OptimizeGetter();
-
-			object result = null;
-
-			if (m_OptimizedGetter != null)
-				result = m_OptimizedGetter(obj);
-			else
-				result = m_Getter.Invoke(IsStatic ? null : obj, null); // convoluted workaround for --full-aot Mono execution
-
-			return ClrToScriptConversions.ObjectToDynValue(script, result);
-		}
-
-		internal void OptimizeGetter()
-		{
-			using (PerformanceStatistics.StartGlobalStopwatch(PerformanceCounter.AdaptersCompilation))
-			{
-				if (m_Getter != null)
-				{
-					if (IsStatic)
-					{
-						var paramExp = Expression.Parameter(typeof(object), "dummy");
-						var propAccess = Expression.Property(null, PropertyInfo);
-						var castPropAccess = Expression.Convert(propAccess, typeof(object));
-						var lambda = Expression.Lambda<Func<object, object>>(castPropAccess, paramExp);
-						Interlocked.Exchange(ref m_OptimizedGetter, lambda.Compile());
-					}
-					else
-					{
-						var paramExp = Expression.Parameter(typeof(object), "obj");
-						var castParamExp = Expression.Convert(paramExp, this.PropertyInfo.DeclaringType);
-						var propAccess = Expression.Property(castParamExp, PropertyInfo);
-						var castPropAccess = Expression.Convert(propAccess, typeof(object));
-						var lambda = Expression.Lambda<Func<object, object>>(castPropAccess, paramExp);
-						Interlocked.Exchange(ref m_OptimizedGetter, lambda.Compile());
-					}
-				}
-			}
-		}
-
-		internal void OptimizeSetter()
-		{
-			using (PerformanceStatistics.StartGlobalStopwatch(PerformanceCounter.AdaptersCompilation))
-			{
-				if (m_Setter != null && !(Framework.Do.IsValueType(PropertyInfo.DeclaringType)))
-				{
-					MethodInfo setterMethod = Framework.Do.GetSetMethod(PropertyInfo);
-
-					if (IsStatic)
-					{
-						var paramExp = Expression.Parameter(typeof(object), "dummy");
-						var paramValExp = Expression.Parameter(typeof(object), "val");
-						var castParamValExp = Expression.Convert(paramValExp, this.PropertyInfo.PropertyType);
-						var callExpression = Expression.Call(setterMethod, castParamValExp);
-						var lambda = Expression.Lambda<Action<object, object>>(callExpression, paramExp, paramValExp);
-						Interlocked.Exchange(ref m_OptimizedSetter, lambda.Compile());
-					}
-					else
-					{
-						var paramExp = Expression.Parameter(typeof(object), "obj");
-						var paramValExp = Expression.Parameter(typeof(object), "val");
-						var castParamExp = Expression.Convert(paramExp, this.PropertyInfo.DeclaringType);
-						var castParamValExp = Expression.Convert(paramValExp, this.PropertyInfo.PropertyType);
-						var callExpression = Expression.Call(castParamExp, setterMethod, castParamValExp);
-						var lambda = Expression.Lambda<Action<object, object>>(callExpression, paramExp, paramValExp);
-						Interlocked.Exchange(ref m_OptimizedSetter, lambda.Compile());
-					}
-				}
-			}
+			return ClrToScriptConversions.ObjectToDynValue(script, m_Getter.Invoke( IsStatic ? null : obj, null ) );
 		}
 
 		/// <summary>
@@ -239,17 +162,7 @@ namespace MoonSharp.Interpreter.Interop
 				if (value is double)
 					value = NumericConversions.DoubleToType(PropertyInfo.PropertyType, (double)value);
 
-				if (AccessMode == InteropAccessMode.LazyOptimized && m_OptimizedSetter == null)
-					OptimizeSetter();
-
-				if (m_OptimizedSetter != null)
-				{
-					m_OptimizedSetter(obj, value);
-				}
-				else
-				{
-					m_Setter.Invoke(IsStatic ? null : obj, new object[] { value }); // convoluted workaround for --full-aot Mono execution
-				}
+				m_Setter.Invoke(IsStatic ? null : obj, new object[] { value }); // convoluted workaround for --full-aot Mono execution
 			}
 			catch (ArgumentException)
 			{
@@ -278,15 +191,6 @@ namespace MoonSharp.Interpreter.Interop
 
 				return access;
 			}
-		}
-
-		/// <summary>
-		/// Called by standard descriptors when background optimization or preoptimization needs to be performed.
-		/// </summary>
-		void IOptimizableDescriptor.Optimize()
-		{
-			this.OptimizeGetter();
-			this.OptimizeSetter();
 		}
 
 		/// <summary>

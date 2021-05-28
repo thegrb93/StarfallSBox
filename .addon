@@ -5,15 +5,6 @@
 	
 	"depends": 
 	[
-		"sandbox",
+		"base",
 	],
-	
-	"gamemodes":
-	[
-		{
-			"name": "starfall",
-			"title": "Sandbox with starfall",
-			"description": ""
-		}
-	]
 }

@@ -12,7 +12,7 @@ namespace MoonSharp.Interpreter.Interop.BasicDescriptors
 	/// Metamethods are also by default dispatched to operator overloads and other similar methods - see
 	/// <see cref="MetaIndex"/> .
 	/// </summary>
-	public abstract class DispatchingUserDataDescriptor : IUserDataDescriptor, IOptimizableDescriptor
+	public abstract class DispatchingUserDataDescriptor : IUserDataDescriptor
 	{
 		private int m_ExtMethodsVersion = 0;
 		private Dictionary<string, IMemberDescriptor> m_MetaMembers = new Dictionary<string, IMemberDescriptor>();
@@ -372,15 +372,6 @@ namespace MoonSharp.Interpreter.Interop.BasicDescriptors
 			{
 				return false;
 			}
-		}
-
-		void IOptimizableDescriptor.Optimize()
-		{
-			foreach (var m in this.m_MetaMembers.Values.OfType<IOptimizableDescriptor>())
-				m.Optimize();
-
-			foreach (var m in this.m_Members.Values.OfType<IOptimizableDescriptor>())
-				m.Optimize();
 		}
 
 		/// <summary>

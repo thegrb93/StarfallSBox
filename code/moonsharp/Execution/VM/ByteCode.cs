@@ -72,7 +72,7 @@ namespace MoonSharp.Interpreter.Execution.VM
 					sb.AppendFormat("{0:X8}  {1}\n", i, Code[i]);
 			}
 
-			File.WriteAllText(file, sb.ToString());
+			Sandbox.FileSystem.Mounted.WriteAllText(file, sb.ToString());
 		}
 	#endif
 

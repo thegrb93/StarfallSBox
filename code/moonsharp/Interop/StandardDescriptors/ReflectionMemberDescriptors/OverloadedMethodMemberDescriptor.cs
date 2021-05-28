@@ -12,7 +12,7 @@ namespace MoonSharp.Interpreter.Interop
 	/// <summary>
 	/// Class providing easier marshalling of overloaded CLR functions
 	/// </summary>
-	public class OverloadedMethodMemberDescriptor : IOptimizableDescriptor, IMemberDescriptor, IWireableDescriptor
+	public class OverloadedMethodMemberDescriptor : IMemberDescriptor, IWireableDescriptor
 	{
 		/// <summary>
 		/// Comparer class for IOverloadableMemberDescriptor
@@ -423,13 +423,6 @@ namespace MoonSharp.Interpreter.Interop
 		public Func<ScriptExecutionContext, CallbackArguments, DynValue> GetCallback(Script script, object obj)
 		{
 			return (context, args) => PerformOverloadedCall(script, obj, context, args);
-		}
-
-
-		void IOptimizableDescriptor.Optimize()
-		{
-			foreach (var d in m_Overloads.OfType<IOptimizableDescriptor>())
-				d.Optimize();
 		}
 
 		/// <summary>

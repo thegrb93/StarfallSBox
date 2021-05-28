@@ -1,5 +1,4 @@
 ﻿#if DOTNET_CORE || (!(PCL || ENABLE_DOTNET || NETFX_CORE))
-using System.IO;
 
 namespace MoonSharp.Interpreter.Loaders
 {
@@ -15,7 +14,7 @@ namespace MoonSharp.Interpreter.Loaders
 		/// <returns></returns>
 		public override bool ScriptFileExists(string name)
 		{
-			return File.Exists(name);
+			return Sandbox.FileSystem.Mounted.FileExists( name);
 		}
 
 		/// <summary>
@@ -31,7 +30,7 @@ namespace MoonSharp.Interpreter.Loaders
 		/// </returns>
 		public override object LoadFile(string file, Table globalContext)
 		{
-			return new FileStream(file, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
+			return Sandbox.FileSystem.Mounted.OpenRead( file );
 		}
 	}
 }

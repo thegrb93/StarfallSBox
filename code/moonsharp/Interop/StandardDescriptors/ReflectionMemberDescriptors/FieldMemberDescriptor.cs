@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Linq.Expressions;
 using System.Reflection;
 using System.Threading;
 using MoonSharp.Interpreter.Compatibility;
@@ -12,7 +11,7 @@ namespace MoonSharp.Interpreter.Interop
 	/// <summary>
 	/// Class providing easier marshalling of CLR fields
 	/// </summary>
-	public class FieldMemberDescriptor : IMemberDescriptor, IOptimizableDescriptor, IWireableDescriptor
+	public class FieldMemberDescriptor : IMemberDescriptor, IWireableDescriptor
 	{
 		/// <summary>
 		/// Gets the FieldInfo got by reflection
@@ -41,8 +40,6 @@ namespace MoonSharp.Interpreter.Interop
 
 
 		object m_ConstValue = null;
-
-		Func<object, object> m_OptimizedGetter = null;
 
 
 		/// <summary>
@@ -85,11 +82,6 @@ namespace MoonSharp.Interpreter.Interop
 			{
 				IsReadonly = this.FieldInfo.IsInitOnly;
 			}
-
-			if (AccessMode == InteropAccessMode.Preoptimized)
-			{
-				this.OptimizeGetter();
-			}
 		}
 
 
@@ -106,45 +98,7 @@ namespace MoonSharp.Interpreter.Interop
 			// optimization+workaround of Unity bug.. 
 			if (IsConst)
 				return ClrToScriptConversions.ObjectToDynValue(script, m_ConstValue);
-
-			if (AccessMode == InteropAccessMode.LazyOptimized && m_OptimizedGetter == null)
-				OptimizeGetter();
-
-			object result = null;
-
-			if (m_OptimizedGetter != null)
-				result = m_OptimizedGetter(obj);
-			else
-				result = FieldInfo.GetValue(obj);
-
-			return ClrToScriptConversions.ObjectToDynValue(script, result);
-		}
-
-		internal void OptimizeGetter()
-		{
-			if (this.IsConst)
-				return;
-
-			using (PerformanceStatistics.StartGlobalStopwatch(PerformanceCounter.AdaptersCompilation))
-			{
-				if (IsStatic)
-				{
-					var paramExp = Expression.Parameter(typeof(object), "dummy");
-					var propAccess = Expression.Field(null, FieldInfo);
-					var castPropAccess = Expression.Convert(propAccess, typeof(object));
-					var lambda = Expression.Lambda<Func<object, object>>(castPropAccess, paramExp);
-					Interlocked.Exchange(ref m_OptimizedGetter, lambda.Compile());
-				}
-				else
-				{
-					var paramExp = Expression.Parameter(typeof(object), "obj");
-					var castParamExp = Expression.Convert(paramExp, this.FieldInfo.DeclaringType);
-					var propAccess = Expression.Field(castParamExp, FieldInfo);
-					var castPropAccess = Expression.Convert(propAccess, typeof(object));
-					var lambda = Expression.Lambda<Func<object, object>>(castPropAccess, paramExp);
-					Interlocked.Exchange(ref m_OptimizedGetter, lambda.Compile());
-				}
-			}
+			return ClrToScriptConversions.ObjectToDynValue(script, FieldInfo.GetValue( obj ) );
 		}
 
 		/// <summary>
@@ -200,12 +154,6 @@ namespace MoonSharp.Interpreter.Interop
 				else
 					return MemberDescriptorAccess.CanRead | MemberDescriptorAccess.CanWrite;
 			}
-		}
-
-		void IOptimizableDescriptor.Optimize()
-		{
-			if (m_OptimizedGetter == null)
-				this.OptimizeGetter();
 		}
 
 		/// <summary>

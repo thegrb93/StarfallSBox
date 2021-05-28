@@ -10,8 +10,6 @@ namespace MoonSharp.Interpreter.Platforms
 	/// </summary>
 	public static class PlatformAutoDetector
 	{
-		private static bool? m_IsRunningOnAOT = null;
-
 		private static bool m_AutoDetectionsDone = false;
 
 		/// <summary>
@@ -49,27 +47,7 @@ namespace MoonSharp.Interpreter.Platforms
 			// We do a lazy eval here, so we can wire out this code by not calling it, if necessary..
 			get
 			{
-#if UNITY_WEBGL || UNITY_IOS || UNITY_TVOS || ENABLE_IL2CPP
-				return true;
-#else
-
-				if (!m_IsRunningOnAOT.HasValue)
-				{
-					try
-					{
-						System.Linq.Expressions.Expression e = System.Linq.Expressions.Expression.Constant(5, typeof(int));
-						var lambda = System.Linq.Expressions.Expression.Lambda<Func<int>>(e);
-						lambda.Compile();
-						m_IsRunningOnAOT = false;
-					}
-					catch (Exception)
-					{
-						m_IsRunningOnAOT = true;
-					}
-				}
-
-				return m_IsRunningOnAOT.Value;
-#endif
+				throw new NotImplementedException();
 			}
 		}
 
