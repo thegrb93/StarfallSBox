@@ -6,12 +6,15 @@
 # User-specific files
 *.rsuser
 *.suo
+*.sln
+*.csproj
 *.user
 *.userosscache
 *.sln.docstates
 
 # User-specific files (MonoDevelop/Xamarin Studio)
 *.userprefs
+accesslist.txt
 
 # Mono auto generated files
 mono_crash.*
