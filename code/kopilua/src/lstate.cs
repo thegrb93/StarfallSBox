@@ -62,7 +62,7 @@ namespace KopiLua
 			public void set_array(object array)
 			{
 				this.values = (CallInfo[])array;
-				Debug.Assert(this.values != null);
+				Assert(this.values != null);
 			}
 
 			public CallInfo this[int offset]
@@ -82,37 +82,37 @@ namespace KopiLua
 
 			public static int operator -(CallInfo ci, CallInfo[] values)
 			{
-				Debug.Assert(ci.values == values);
+				Assert(ci.values == values);
 				return ci.index;
 			}
 
 			public static int operator -(CallInfo ci1, CallInfo ci2)
 			{
-				Debug.Assert(ci1.values == ci2.values);
+				Assert(ci1.values == ci2.values);
 				return ci1.index - ci2.index;
 			}
 
 			public static bool operator <(CallInfo ci1, CallInfo ci2)
 			{
-				Debug.Assert(ci1.values == ci2.values);
+				Assert(ci1.values == ci2.values);
 				return ci1.index < ci2.index;
 			}
 
 			public static bool operator <=(CallInfo ci1, CallInfo ci2)
 			{
-				Debug.Assert(ci1.values == ci2.values);
+				Assert(ci1.values == ci2.values);
 				return ci1.index <= ci2.index;
 			}
 
 			public static bool operator >(CallInfo ci1, CallInfo ci2)
 			{
-				Debug.Assert(ci1.values == ci2.values);
+				Assert(ci1.values == ci2.values);
 				return ci1.index > ci2.index;
 			}
 
 			public static bool operator >=(CallInfo ci1, CallInfo ci2)
 			{
-				Debug.Assert(ci1.values == ci2.values);
+				Assert(ci1.values == ci2.values);
 				return ci1.index >= ci2.index;
 			}
 
@@ -226,7 +226,7 @@ namespace KopiLua
 			public void set_array(object array)
 			{
 				//this.values = (GCObject[])array;
-				//Debug.Assert(this.values != null);
+				//Assert(this.values != null);
 			}
 
 			public GCheader gch {get{return (GCheader)this;}}
@@ -275,7 +275,7 @@ namespace KopiLua
 			{
 				// don't actually need this
 				this.vals = (ArrayRef[])vals;
-				Debug.Assert(this.vals != null);
+				Assert(this.vals != null);
 			}
 
 			// ArrayRef is used to reference GCObject objects in an array, the next two members
@@ -339,7 +339,7 @@ namespace KopiLua
 		*/
 		public static lua_State tostate(object l)
 		{
-			Debug.Assert(LUAI_EXTRASPACE == 0, "LUAI_EXTRASPACE not supported");
+			Assert(LUAI_EXTRASPACE == 0, "LUAI_EXTRASPACE not supported");
 			return (lua_State)l;
 		}
 

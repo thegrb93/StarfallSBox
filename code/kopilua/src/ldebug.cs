@@ -20,7 +20,7 @@ namespace KopiLua
 
 		public static int pcRel(InstructionPtr pc, Proto p)
 		{
-			Debug.Assert(pc.codes == p.code);
+			Assert(pc.codes == p.code);
 			return pc.pc - 1;
 		}
 		public static int getline(Proto f, int pc) { return (f.lineinfo != null) ? f.lineinfo[pc] : 0; }

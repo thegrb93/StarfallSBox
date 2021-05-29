@@ -41,7 +41,7 @@ namespace KopiLua
 
         public static void setprogdir(lua_State L)
         {
-            CharPtr buff = Directory.GetCurrentDirectory();
+            CharPtr buff = Sandbox.FileSystem.Mounted.GetFullPath(".");
             luaL_gsub(L, lua_tostring(L, -1), LUA_EXECDIR, buff);
             lua_remove(L, -2);  /* remove original string */
         }

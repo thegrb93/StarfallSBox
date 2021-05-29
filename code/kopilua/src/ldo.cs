@@ -139,16 +139,7 @@ namespace KopiLua
                     lua_unlock(L);
                     G(L).panic(L);
                 }
-                #if XBOX
-                throw new ApplicationException();
-                #else
-                #if SILVERLIGHT
-                throw new SystemException();
-                #else
-                Environment.Exit(EXIT_FAILURE);
-                #endif
-                #endif
-
+                throw new Exception();
             }
         }
 
@@ -564,9 +555,7 @@ namespace KopiLua
             SParser p = (SParser)ud;
             int c = luaZ_lookahead(p.z);
             luaC_checkGC(L);
-            tf = (c == LUA_SIGNATURE[0]) ?
-                luaU_undump(L, p.z, p.buff, p.name) :
-                luaY_parser(L, p.z, p.buff, p.name);
+            tf = luaY_parser(L, p.z, p.buff, p.name);
             cl = luaF_newLclosure(L, tf.nups, hvalue(gt(L)));
             cl.l.p = tf;
             for (i = 0; i < tf.nups; i++)  /* initialize eventual upvalues */

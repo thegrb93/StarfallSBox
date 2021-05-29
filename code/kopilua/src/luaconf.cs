@@ -291,12 +291,7 @@ namespace KopiLua
 		//	  add_history(lua_tostring(L, idx));  /* add it to history */
 		//#define lua_freeline(L,b)	((void)L, free(b))
 #else
-		public static bool lua_readline(lua_State L, CharPtr b, CharPtr p)
-		{
-			fputs(p, stdout);
-			fflush(stdout);		/* show prompt */
-			return (fgets(b, stdin) != null);  /* get line */
-		}
+		public static void lua_readline(lua_State L, CharPtr b, CharPtr p) {}
 		public static void lua_saveline(lua_State L, int idx)	{}
 		public static void lua_freeline(lua_State L, CharPtr b)	{}
 #endif
@@ -388,8 +383,8 @@ namespace KopiLua
 		** with Lua. A useful redefinition is to use assert.h.
 		*/
 		#if LUA_USE_APICHECK
-			public static void luai_apicheck(lua_State L, bool o)	{Debug.Assert(o);}
-			public static void luai_apicheck(lua_State L, int o) {Debug.Assert(o != 0);}
+			public static void luai_apicheck(lua_State L, bool o)	{Assert(o);}
+			public static void luai_apicheck(lua_State L, int o) {Assert(o != 0);}
 		#else
 			public static void luai_apicheck(lua_State L, bool o)	{}
 			public static void luai_apicheck(lua_State L, int o) { }
@@ -534,7 +529,7 @@ namespace KopiLua
 		*/
 		public const string LUA_NUMBER_SCAN = "%lf";
 		public const string LUA_NUMBER_FMT = "%.14g";
-		public static CharPtr lua_number2str(double n) { return String.Format(CultureInfo.InvariantCulture, "{0}", n); }
+		public static CharPtr lua_number2str(double n) { return String.Format("{0}", n); }
 		public const int LUAI_MAXNUMBER2STR = 32; /* 16 digits, sign, point, and \0 */
 
 		private const string number_chars = "0123456789+-eE.";
@@ -552,7 +547,7 @@ namespace KopiLua
 
 			try
 			{
-				return Convert.ToDouble(str.ToString(), Culture("en-US"));
+				return Convert.ToDouble(str.ToString());
 			}
 			catch (System.OverflowException)
 			{
@@ -568,15 +563,6 @@ namespace KopiLua
 				return 0;
 			}
 		}
-
-        private static IFormatProvider Culture(string p)
-        {
-#if SILVERLIGHT
-            return new CultureInfo(p);
-#else
-            return CultureInfo.GetCultureInfo(p);
-#endif
-        }
 
 		/*
 		@@ The luai_num* macros define the primitive operations over numbers.
@@ -673,6 +659,16 @@ namespace KopiLua
 		public static void LUAI_TRY(lua_State L, lua_longjmp c, object a) {
 			if (c.status == 0) c.status = -1;
 		}
+
+		public static void Assert( bool cond, string message = "Fatal error" )
+		{
+			if ( !cond )
+			{
+				Sandbox.Log.Error( message );
+				throw new Exception( message );
+			}
+		}
+
 		//#define luai_jmpbuf	int  /* dummy variable */
 
 		//#elif defined(LUA_USE_ULONGJMP)
@@ -924,16 +920,6 @@ namespace KopiLua
 			}
 		}
 
-		public static void putchar(char ch)
-		{
-			Console.Write(ch);
-		}
-
-		public static void putchar(int ch)
-		{
-			Console.Write((char)ch);
-		}
-
 		public static bool isprint(byte c)
 		{
 			return (c >= (byte)' ') && (c <= (byte)127);
@@ -955,22 +941,22 @@ namespace KopiLua
 							}
 						case 'c':
 							{
-                                argp[parm_index++] = Convert.ToChar(str, Culture("en-US"));
+                                argp[parm_index++] = Convert.ToChar(str);
 								break;
 							}
 						case 'd':
 							{
-                                argp[parm_index++] = Convert.ToInt32(str, Culture("en-US"));
+                                argp[parm_index++] = Convert.ToInt32(str);
 								break;
 							}
 						case 'l':
 							{
-                                argp[parm_index++] = Convert.ToDouble(str, Culture("en-US"));
+                                argp[parm_index++] = Convert.ToDouble(str);
 								break;
 							}
 						case 'f':
 							{
-                                argp[parm_index++] = Convert.ToDouble(str, Culture("en-US"));
+                                argp[parm_index++] = Convert.ToDouble(str);
 								break;
 							}
 						//case 'p':
@@ -1119,15 +1105,15 @@ namespace KopiLua
 				return new CharPtr(result);
 			}
 			public static int operator -(CharPtr ptr1, CharPtr ptr2) {
-				Debug.Assert(ptr1.chars == ptr2.chars); return ptr1.index - ptr2.index; }
+				Assert(ptr1.chars == ptr2.chars); return ptr1.index - ptr2.index; }
 			public static bool operator <(CharPtr ptr1, CharPtr ptr2) {
-				Debug.Assert(ptr1.chars == ptr2.chars); return ptr1.index < ptr2.index; }
+				Assert(ptr1.chars == ptr2.chars); return ptr1.index < ptr2.index; }
 			public static bool operator <=(CharPtr ptr1, CharPtr ptr2) {
-				Debug.Assert(ptr1.chars == ptr2.chars); return ptr1.index <= ptr2.index; }
+				Assert(ptr1.chars == ptr2.chars); return ptr1.index <= ptr2.index; }
 			public static bool operator >(CharPtr ptr1, CharPtr ptr2) {
-				Debug.Assert(ptr1.chars == ptr2.chars); return ptr1.index > ptr2.index; }
+				Assert(ptr1.chars == ptr2.chars); return ptr1.index > ptr2.index; }
 			public static bool operator >=(CharPtr ptr1, CharPtr ptr2) {
-				Debug.Assert(ptr1.chars == ptr2.chars); return ptr1.index >= ptr2.index; }
+				Assert(ptr1.chars == ptr2.chars); return ptr1.index >= ptr2.index; }
 			public static bool operator ==(CharPtr ptr1, CharPtr ptr2) {
 				object o1 = ptr1 as CharPtr;
 				object o2 = ptr2 as CharPtr;
@@ -1284,21 +1270,10 @@ namespace KopiLua
 				f.Seek(-1, SeekOrigin.Current);
 		}
 
-#if XBOX || SILVERLIGHT
 		public static Stream stdout;
 		public static Stream stdin;
 		public static Stream stderr;
-#else
-		public static Stream stdout = Console.OpenStandardOutput();
-		public static Stream stdin = Console.OpenStandardInput();
-		public static Stream stderr = Console.OpenStandardError();
-#endif
 		public static int EOF = -1;
-
-		public static void fputs(CharPtr str, Stream stream)
-		{
-			Console.Write(str.ToString());
-		}
 
 		public static int feof(Stream s)
 		{
@@ -1417,31 +1392,25 @@ namespace KopiLua
 
 		public static Stream fopen(CharPtr filename, CharPtr mode)
 		{
-			string str = filename.ToString();			
-			FileMode filemode = FileMode.Open;
-			FileAccess fileaccess = (FileAccess)0;			
-			for (int i=0; mode[i] != '\0'; i++)
-				switch (mode[i])
-				{
-					case 'r': 
-						fileaccess = fileaccess | FileAccess.Read;
-						if (!File.Exists(str))
-							return null;
-						break;
-
-					case 'w':
-						filemode = FileMode.Create;
-						fileaccess = fileaccess | FileAccess.Write;
-						break;
-				}
+			string str = filename.ToString();
 			try
 			{
-				return new FileStream(str, filemode, fileaccess);
+				for ( int i = 0; mode[i] != '\0'; i++ )
+					switch ( mode[i] )
+					{
+						case 'r':
+							if ( !Sandbox.FileSystem.Mounted.FileExists( str ) )
+								return null;
+							return Sandbox.FileSystem.Mounted.OpenRead( str );
+
+						case 'w':
+							return Sandbox.FileSystem.Mounted.OpenWrite( str );
+					}
 			}
 			catch
 			{
-				return null;
 			}
+			return null;
 		}
 
 		public static Stream freopen(CharPtr filename, CharPtr mode, Stream stream)
@@ -1472,18 +1441,11 @@ namespace KopiLua
 			return 0;
 		}
 
-#if !XBOX
-		public static Stream tmpfile()
-		{
-			return new FileStream(Path.GetTempFileName(), FileMode.Create, FileAccess.ReadWrite);
-		}
-#endif
-
-		public static int fscanf(Stream f, CharPtr format, params object[] argp)
-		{
-			string str = Console.ReadLine();
-			return parse_scanf(str, format, argp);
-		}
+		//public static int fscanf(Stream f, CharPtr format, params object[] argp)
+		//{
+		//	string str = Console.ReadLine();
+		//	return parse_scanf(str, format, argp);
+		//}
 		
 		public static int fseek(Stream f, long offset, int origin)
 		{
@@ -1506,13 +1468,13 @@ namespace KopiLua
 
 		public static int clearerr(Stream f)
 		{
-			//Debug.Assert(false, "clearerr not implemented yet - mjf");
+			//Assert(false, "clearerr not implemented yet - mjf");
 			return 0;
 		}
 
 		public static int setvbuf(Stream stream, CharPtr buffer, int mode, uint size)
 		{
-			Debug.Assert(false, "setvbuf not implemented yet - mjf");
+			Assert(false, "setvbuf not implemented yet - mjf");
 			return 0;
 		}
 
@@ -1638,14 +1600,10 @@ namespace KopiLua
 				return 20;
 			else if (t == typeof(Mbuffer))
 				return 12;
-			else if (t == typeof(LoadState))
-				return 16;
 			else if (t == typeof(MatchState))
 				return 272;
 			else if (t == typeof(stringtable))
 				return 12;
-			else if (t == typeof(FilePtr))
-				return 4;
 			else if (t == typeof(Udata))
 				return 24;
 			else if (t == typeof(Char))
@@ -1660,7 +1618,7 @@ namespace KopiLua
 				return 4;
 			else if (t == typeof(Single))
 				return 4;			
-			Debug.Assert(false, "Trying to get unknown sized of unmanaged type " + t.ToString());
+			Assert(false, "Trying to get unknown sized of unmanaged type " + t.ToString());
 			return 0;
 		}
 	}

@@ -243,14 +243,10 @@ namespace AT.MIN
 		#region printf
 		public static void printf( string Format, params object[] Parameters )
 		{
-			Console.Write( Tools.sprintf( Format, Parameters ) );
+			Sandbox.Log.Info( Tools.sprintf( Format, Parameters ) );
 		}
 		#endregion
 		#region fprintf
-		public static void fprintf( TextWriter Destination, string Format, params object[] Parameters )
-		{
-			Destination.Write( Tools.sprintf( Format, Parameters ) );
-		}
 
 		internal static Regex r = new Regex(@"\%(\d*\$)?([\'\#\-\+ ]*)(\d*)(?:\.(\d+))?([hl])?([dioxXucsfeEgGpn%])");
 
@@ -664,7 +660,7 @@ namespace AT.MIN
 
 			if ( IsNumericType( Value ) )
 			{
-				w = String.Format(CultureInfo.InvariantCulture, numberFormat, Value );
+				w = String.Format(numberFormat, Value );
 
 				if ( Left2Right || Padding == ' ' )
 				{

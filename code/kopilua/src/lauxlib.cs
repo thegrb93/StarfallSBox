@@ -747,7 +747,7 @@ namespace KopiLua
 
 
 		private static object l_alloc (Type t) {
-			return System.Activator.CreateInstance(t);
+			return Sandbox.Library.Create<object>( t );
 		}
 
 

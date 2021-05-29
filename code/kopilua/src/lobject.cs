@@ -117,7 +117,7 @@ namespace KopiLua
 			public void set_array(object array)
 			{
 				this.values = (lua_TValue[])array;
-				Debug.Assert(this.values != null);
+				Assert(this.values != null);
 			}
 
 			public lua_TValue this[int offset]
@@ -147,37 +147,37 @@ namespace KopiLua
 
 			public static int operator -(lua_TValue value, lua_TValue[] array)
 			{
-				Debug.Assert(value.values == array);
+				Assert(value.values == array);
 				return value.index;
 			}
 
 			public static int operator -(lua_TValue a, lua_TValue b)
 			{
-				Debug.Assert(a.values == b.values);
+				Assert(a.values == b.values);
 				return a.index - b.index;
 			}
 			
 			public static bool operator <(lua_TValue a, lua_TValue b)
 			{
-				Debug.Assert(a.values == b.values);
+				Assert(a.values == b.values);
 				return a.index < b.index;
 			}
 
 			public static bool operator <=(lua_TValue a, lua_TValue b)
 			{
-				Debug.Assert(a.values == b.values);
+				Assert(a.values == b.values);
 				return a.index <= b.index;
 			}
 
 			public static bool operator >(lua_TValue a, lua_TValue b)
 			{
-				Debug.Assert(a.values == b.values);
+				Assert(a.values == b.values);
 				return a.index > b.index;
 			}
 
 			public static bool operator >=(lua_TValue a, lua_TValue b)
 			{
-				Debug.Assert(a.values == b.values);
+				Assert(a.values == b.values);
 				return a.index >= b.index;
 			}
 			
@@ -270,17 +270,12 @@ namespace KopiLua
 		/*
 		** for internal debug only
 		*/
-		[Conditional("DEBUG")]
 		internal static void checkconsistency(TValue obj)
 		{
-			lua_assert(!iscollectable(obj) || (ttype(obj) == (obj).value.gc.gch.tt));
 		}
 
-		[Conditional("DEBUG")]
 		internal static void checkliveness(global_State g, TValue obj)
 		{
-			lua_assert(!iscollectable(obj) ||
-			((ttype(obj) == obj.value.gc.gch.tt) && !isdead(g, obj.value.gc)));
 		}
 		
 		/* Macros to set values */
@@ -607,7 +602,7 @@ namespace KopiLua
 			public void set_array(object array)
 			{
 				this.values = (Node[])array;
-				Debug.Assert(this.values != null);
+				Assert(this.values != null);
 			}
 
 			public Node()
@@ -647,7 +642,7 @@ namespace KopiLua
 
 			public static int operator -(Node n1, Node n2)
 			{
-				Debug.Assert(n1.values == n2.values);
+				Assert(n1.values == n2.values);
 				return n1.index - n2.index;
 			}
 
@@ -663,10 +658,10 @@ namespace KopiLua
 				return node[1];
 			}
 
-			public static bool operator >(Node n1, Node n2) { Debug.Assert(n1.values == n2.values); return n1.index > n2.index; }
-			public static bool operator >=(Node n1, Node n2) { Debug.Assert(n1.values == n2.values); return n1.index >= n2.index; }
-			public static bool operator <(Node n1, Node n2) { Debug.Assert(n1.values == n2.values); return n1.index < n2.index; }
-			public static bool operator <=(Node n1, Node n2) { Debug.Assert(n1.values == n2.values); return n1.index <= n2.index; }
+			public static bool operator >(Node n1, Node n2) { Assert(n1.values == n2.values); return n1.index > n2.index; }
+			public static bool operator >=(Node n1, Node n2) { Assert(n1.values == n2.values); return n1.index >= n2.index; }
+			public static bool operator <(Node n1, Node n2) { Assert(n1.values == n2.values); return n1.index < n2.index; }
+			public static bool operator <=(Node n1, Node n2) { Assert(n1.values == n2.values); return n1.index <= n2.index; }
 			public static bool operator ==(Node n1, Node n2)
 			{
 				object o1 = n1 as Node;

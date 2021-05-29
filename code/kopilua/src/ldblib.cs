@@ -294,19 +294,7 @@ namespace KopiLua
 
 
         private static int db_debug (lua_State L) {
-            for (;;) {
-                CharPtr buffer = new char[250];
-                fputs("lua_debug> ", stderr);
-                if (fgets(buffer, stdin) == null ||
-                    strcmp(buffer, "cont\n") == 0)
-                    return 0;
-                if (luaL_loadbuffer(L, buffer, (uint)strlen(buffer), "=(debug command)")!=0 ||
-                    lua_pcall(L, 0, 0, 0)!=0) {
-                    fputs(lua_tostring(L, -1), stderr);
-                    fputs("\n", stderr);
-                }
-                lua_settop(L, 0);  /* remove eventual returns */
-            }
+			return 0;
         }
 
 

@@ -352,7 +352,7 @@ namespace KopiLua
          ** some macros for common tasks in `luaV_execute'
          */
 
-        public static void runtime_check(lua_State L, bool c)	{ Debug.Assert(c); }
+        public static void runtime_check(lua_State L, bool c)	{ Assert(c); }
 
         //#define RA(i)	(base+GETARG_A(i))
         /* to be used after possible stack reallocation */
@@ -394,79 +394,6 @@ namespace KopiLua
                 base_ = L.base_;
                 //);
             }
-        }
-
-        internal static void Dump(int pc, Instruction i)
-        {
-            int A = GETARG_A(i);
-            int B = GETARG_B(i);
-            int C = GETARG_C(i);
-            int Bx = GETARG_Bx(i);
-            int sBx = GETARG_sBx(i);
-            if ((sBx & 0x100) != 0)
-                sBx = - (sBx & 0xff);
-
-            Console.Write("{0,5} ({1,10}): ", pc, i);
-            Console.Write("{0,-10}\t", luaP_opnames[(int)GET_OPCODE(i)]);
-            switch (GET_OPCODE(i))
-            {
-                case OpCode.OP_CLOSE:
-                    Console.Write("{0}", A);
-                    break;
-
-                case OpCode.OP_MOVE:
-                case OpCode.OP_LOADNIL:
-                case OpCode.OP_GETUPVAL:
-                case OpCode.OP_SETUPVAL:
-                case OpCode.OP_UNM:
-                case OpCode.OP_NOT:
-                case OpCode.OP_RETURN:
-                    Console.Write("{0}, {1}", A, B);
-                    break;
-
-                case OpCode.OP_LOADBOOL:
-                case OpCode.OP_GETTABLE:
-                case OpCode.OP_SETTABLE:
-                case OpCode.OP_NEWTABLE:
-                case OpCode.OP_SELF:
-                case OpCode.OP_ADD:
-                case OpCode.OP_SUB:
-                case OpCode.OP_MUL:
-                case OpCode.OP_DIV:
-                case OpCode.OP_POW:
-                case OpCode.OP_CONCAT:
-                case OpCode.OP_EQ:
-                case OpCode.OP_LT:
-                case OpCode.OP_LE:
-                case OpCode.OP_TEST:
-                case OpCode.OP_CALL:
-                case OpCode.OP_TAILCALL:
-                    Console.Write("{0}, {1}, {2}", A, B, C);
-                    break;
-
-                case OpCode.OP_LOADK:
-                    Console.Write("{0}, {1}", A, Bx);
-                    break;
-
-                case OpCode.OP_GETGLOBAL:
-                case OpCode.OP_SETGLOBAL:
-                case OpCode.OP_SETLIST:
-                case OpCode.OP_CLOSURE:
-                    Console.Write("{0}, {1}", A, Bx);
-                    break;
-
-                case OpCode.OP_TFORLOOP:
-                    Console.Write("{0}, {1}", A, C);
-                    break;
-
-                case OpCode.OP_JMP:
-                case OpCode.OP_FORLOOP:
-                case OpCode.OP_FORPREP:
-                    Console.Write("{0}, {1}", A, sBx);
-                    break;
-            }
-            Console.WriteLine();
-
         }
 
         public static void luaV_execute (lua_State L, int nexeccalls) {

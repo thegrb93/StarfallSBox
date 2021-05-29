@@ -64,21 +64,17 @@ namespace KopiLua
 
 #if lua_assert
 
-		[Conditional("DEBUG")]
-		internal static void lua_assert(bool c) {Debug.Assert(c);}
+		internal static void lua_assert(bool c) {}
 
-		[Conditional("DEBUG")]
-		internal static void lua_assert(int c) { Debug.Assert(c != 0); }
+		internal static void lua_assert(int c) {}
 
 		internal static object check_exp(bool c, object e)		{lua_assert(c); return e;}
 		internal static object check_exp(int c, object e) { lua_assert(c != 0); return e; }
 
 #else
 
-		[Conditional("DEBUG")]
 		internal static void lua_assert(bool c) { }
 
-		[Conditional("DEBUG")]
 		internal static void lua_assert(int c) { }
 
 		internal static object check_exp(bool c, object e) { return e; }
@@ -86,8 +82,7 @@ namespace KopiLua
 
 #endif
 
-		[Conditional("DEBUG")]
-		internal static void api_check(object o, bool e) { lua_assert(e); }
+		internal static void api_check(object o, bool e) {}
 		internal static void api_check(object o, int e) { lua_assert(e != 0); }
 
 		//#define UNUSED(x)	((void)(x))	/* to avoid warnings */
@@ -105,14 +100,14 @@ namespace KopiLua
 		internal static int cast_int(ulong i) { return (int)(int)i; }
 		internal static int cast_int(bool i) { return i ? (int)1 : (int)0; }
 		internal static int cast_int(lua_Number i) { return (int)i; }
-		internal static int cast_int(object i) { Debug.Assert(false, "Can't convert int."); return Convert.ToInt32(i); }
+		internal static int cast_int(object i) { Assert(false, "Can't convert int."); return Convert.ToInt32(i); }
 
 		internal static lua_Number cast_num(int i) { return (lua_Number)i; }
 		internal static lua_Number cast_num(uint i) { return (lua_Number)i; }
 		internal static lua_Number cast_num(long i) { return (lua_Number)i; }
 		internal static lua_Number cast_num(ulong i) { return (lua_Number)i; }
 		internal static lua_Number cast_num(bool i) { return i ? (lua_Number)1 : (lua_Number)0; }
-		internal static lua_Number cast_num(object i) { Debug.Assert(false, "Can't convert number."); return Convert.ToSingle(i); }
+		internal static lua_Number cast_num(object i) { Assert(false, "Can't convert number."); return Convert.ToSingle(i); }
 
 		/*
 		** type for virtual-machine instructions

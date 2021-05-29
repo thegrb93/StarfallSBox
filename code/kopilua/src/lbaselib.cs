@@ -24,6 +24,7 @@ namespace KopiLua
 		  int n = lua_gettop(L);  /* number of arguments */
 		  int i;
 		  lua_getglobal(L, "tostring");
+		  StringBuilder sb = new StringBuilder();
 		  for (i=1; i<=n; i++) {
 			CharPtr s;
 			lua_pushvalue(L, -1);  /* function to be called */
@@ -33,11 +34,11 @@ namespace KopiLua
 			if (s == null)
 			  return luaL_error(L, LUA_QL("tostring") + " must return a string to " +
 								   LUA_QL("print"));
-			if (i > 1) fputs("\t", stdout);
-			fputs(s, stdout);
+			if (i > 1) sb.Append("\t");
+			sb.Append(s.ToString());
 			lua_pop(L, 1);  /* pop result */
 		  }
-		  Console.Write("\n", stdout);
+	      Sandbox.Log.Info( sb.ToString() );
 		  return 0;
 		}
 

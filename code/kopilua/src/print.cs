@@ -27,7 +27,8 @@ namespace KopiLua
 		{
 		 CharPtr s=getstr(ts);
 		 uint i,n=ts.tsv.len;
-		 putchar('"');
+		 StringBuilder sb = new StringBuilder();
+		 sb.Append('"');
 		 for (i=0; i<n; i++)
 		 {
 		  int c=s[i];
@@ -43,13 +44,14 @@ namespace KopiLua
 		   case '\t': printf("\\t"); break;
 		   case '\v': printf("\\v"); break;
 		   default:	if (isprint((byte)c))
-   					putchar(c);
+   					sb.Append(c);
 				else
 					printf("\\%03u",(byte)c);
 				break;
 		  }
 		 }
-		 putchar('"');
+		 sb.Append('"');
+		 Sandbox.Log.Info( sb.ToString() );
 		}
 
 		private static void PrintConstant(Proto f, int i)

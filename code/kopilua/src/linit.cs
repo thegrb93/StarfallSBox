@@ -16,8 +16,6 @@ namespace KopiLua
 		  new luaL_Reg("", luaopen_base),
 		  new luaL_Reg(LUA_LOADLIBNAME, luaopen_package),
 		  new luaL_Reg(LUA_TABLIBNAME, luaopen_table),
-		  new luaL_Reg(LUA_IOLIBNAME, luaopen_io),
-		  new luaL_Reg(LUA_OSLIBNAME, luaopen_os),
 		  new luaL_Reg(LUA_STRLIBNAME, luaopen_string),
 		  new luaL_Reg(LUA_MATHLIBNAME, luaopen_math),
 		  new luaL_Reg(LUA_DBLIBNAME, luaopen_debug),

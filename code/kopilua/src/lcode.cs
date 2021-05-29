@@ -47,22 +47,22 @@ namespace KopiLua
 		}
 		public static bool operator <(InstructionPtr p1, InstructionPtr p2)
 		{
-			Debug.Assert(p1.codes == p2.codes);
+			Lua.Assert(p1.codes == p2.codes);
 			return p1.pc < p2.pc;
 		}
 		public static bool operator >(InstructionPtr p1, InstructionPtr p2)
 		{
-			Debug.Assert(p1.codes == p2.codes);
+			Lua.Assert(p1.codes == p2.codes);
 			return p1.pc > p2.pc;
 		}
 		public static bool operator <=(InstructionPtr p1, InstructionPtr p2)
 		{
-			Debug.Assert(p1.codes == p2.codes);
+			Lua.Assert(p1.codes == p2.codes);
 			return p1.pc < p2.pc;
 		}
 		public static bool operator >=(InstructionPtr p1, InstructionPtr p2)
 		{
-			Debug.Assert(p1.codes == p2.codes);
+			Lua.Assert(p1.codes == p2.codes);
 			return p1.pc > p2.pc;
 		}
 	};

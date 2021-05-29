@@ -46,7 +46,7 @@ namespace KopiLua
 
 		public static T[] luaM_reallocvector<T>(lua_State L, ref T[] v, int oldn, int n)
 		{
-			Debug.Assert((v == null && oldn == 0) || (v.Length == oldn));
+			Assert((v == null && oldn == 0) || (v.Length == oldn));
 			v = luaM_reallocv<T>(L, v, n);
 			return v;
 		}
@@ -113,7 +113,7 @@ namespace KopiLua
 		{
 			int unmanaged_size = (int)GetUnmanagedSize(t);
 			int nsize = unmanaged_size;
-			object new_obj = System.Activator.CreateInstance(t);
+			object new_obj = Sandbox.Library.Create<object>(t);
 			AddTotalBytes(L, nsize);
 			return new_obj;
 		}
@@ -122,7 +122,7 @@ namespace KopiLua
 		{
 			int unmanaged_size = (int)GetUnmanagedSize(typeof(T));
 			int nsize = unmanaged_size;
-			T new_obj = (T)System.Activator.CreateInstance(typeof(T));
+			T new_obj = (T)Sandbox.Library.Create<T>(typeof(T));
 			AddTotalBytes(L, nsize);
 			return new_obj;
 		}
@@ -133,7 +133,7 @@ namespace KopiLua
 			int old_size = (obj == null) ? 0 : unmanaged_size;
 			int osize = old_size * unmanaged_size;
 			int nsize = unmanaged_size;
-			T new_obj = (T)System.Activator.CreateInstance(typeof(T));
+			T new_obj = (T)Sandbox.Library.Create<T>( typeof(T));
 			SubtractTotalBytes(L, osize);
 			AddTotalBytes(L, nsize);
 			return new_obj;
@@ -149,12 +149,12 @@ namespace KopiLua
 			for (int i = 0; i < Math.Min(old_size, new_size); i++)
 				new_block[i] = old_block[i];
 			for (int i = old_size; i < new_size; i++)
-				new_block[i] = (T)System.Activator.CreateInstance(typeof(T));
+				new_block[i] = (T)Sandbox.Library.Create<T>( typeof(T));
 			if (CanIndex(typeof(T)))
 				for (int i = 0; i < new_size; i++)
 				{
 					ArrayElement elem = new_block[i] as ArrayElement;
-					Debug.Assert(elem != null, String.Format("Need to derive type {0} from ArrayElement", typeof(T).ToString()));
+					Assert(elem != null, String.Format("Need to derive type {0} from ArrayElement", typeof(T).ToString()));
 					elem.set_index(i);
 					elem.set_array(new_block);
 				}
