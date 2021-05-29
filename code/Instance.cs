@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using MoonSharp.Interpreter;
 using Sandbox;
 
 namespace Starfall
@@ -22,7 +21,6 @@ namespace Starfall
         StarfallData data;
         Player player;
         Entity entity;
-        Script luaInstance;
 
         Dictionary<string, List<InstanceHook>> hooks = new Dictionary<string, List<InstanceHook>>();
         Dictionary<string, List<UserHook>> userhooks = new Dictionary<string, List<UserHook>>();
@@ -37,9 +35,6 @@ namespace Starfall
 
         public bool Compile()
         {
-            this.luaInstance = new Script();
-            DynValue result = this.luaInstance.DoString(this.data.files[this.data.mainfile]);
-
             return true;
         }
 

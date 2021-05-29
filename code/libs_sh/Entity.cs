@@ -1,17 +1,10 @@
-﻿using MoonSharp.Interpreter;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using Sandbox;
 
 namespace Starfall
 {
-    [MoonSharpUserData]
     class SFEntity
     {
-        public static void Register()
-        {
-            UserData.RegisterProxyType<SFEntity, Entity>(r => new SFEntity(r));
-        }
-
         Entity ent;
         public SFEntity(Entity ent)
         {
