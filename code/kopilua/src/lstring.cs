@@ -126,7 +126,7 @@ namespace KopiLua
 			return u;
 		}
 
-		internal static Udata luaS_newudata(lua_State L, Type t, Table e)
+		internal static Udata luaS_newudata<T>(lua_State L, Table e)
 		{
 			Udata u = new Udata();
 			u.uv.marked = luaC_white(G(L));  /* is not finalized */
@@ -134,7 +134,7 @@ namespace KopiLua
 			u.uv.len = 0;
 			u.uv.metatable = null;
 			u.uv.env = e;
-			u.user_data = luaM_realloc_(L, t);
+			u.user_data = luaM_realloc_<T>(L);
 			AddTotalBytes(L, GetUnmanagedSize(typeof(Udata)));
 			/* chain it on udata list (after main thread) */
 			u.uv.next = G(L).mainthread.next;

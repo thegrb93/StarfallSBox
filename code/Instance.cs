@@ -35,6 +35,7 @@ namespace Starfall
 
         public bool Compile()
         {
+			Log.Info( System.Runtime.InteropServices.Marshal.SizeOf( this.player ).ToString() );
             return true;
         }
 

@@ -746,8 +746,8 @@ namespace KopiLua
 		/* }====================================================== */
 
 
-		private static object l_alloc (Type t) {
-			return Sandbox.Library.Create<object>( t );
+		private static object l_alloc<T> () {
+			return System.Activator.CreateInstance<T>();
 		}
 
 
@@ -761,7 +761,7 @@ namespace KopiLua
 
 		public static lua_State luaL_newstate()
 		{
-			lua_State L = lua_newstate(l_alloc, null);
+			lua_State L = lua_newstate(null);
 		  if (L != null) lua_atpanic(L, panic);
 		  return L;
 		}

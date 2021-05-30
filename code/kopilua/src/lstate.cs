@@ -149,7 +149,6 @@ namespace KopiLua
 		*/
 		public class global_State {
 		  public stringtable strt = new stringtable(); /* hash table for strings */
-		  public lua_Alloc frealloc;  /* function to reallocate memory */
 		  public object ud;         /* auxiliary data to `frealloc' */
 		  public lu_byte currentwhite;
 		  public lu_byte gcstate;  /* state of garbage collector */
@@ -457,12 +456,12 @@ namespace KopiLua
 		}
 
 
-		public static lua_State lua_newstate (lua_Alloc f, object ud) {
+		public static lua_State lua_newstate (object ud) {
 		  int i;
 		  lua_State L;
 		  global_State g;
 		  //object l = f(ud, null, 0, (uint)state_size(typeof(LG)));
-		  object l = f(typeof(LG));
+		  object l = new LG();
 		  if (l == null) return null;
 		  L = tostate(l);
 		  g = (L as LG).g;
@@ -474,7 +473,6 @@ namespace KopiLua
 		  set2bits(ref marked, FIXEDBIT, SFIXEDBIT);
 		  L.marked = marked;
 		  preinit_state(L, g);
-		  g.frealloc = f;
 		  g.ud = ud;
 		  g.mainthread = L;
 		  g.uvhead.u.l.prev = g.uvhead;

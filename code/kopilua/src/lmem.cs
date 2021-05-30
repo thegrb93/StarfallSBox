@@ -109,20 +109,11 @@ namespace KopiLua
 		** generic allocation routine.
 		*/
 
-		public static object luaM_realloc_(lua_State L, Type t)
-		{
-			int unmanaged_size = (int)GetUnmanagedSize(t);
-			int nsize = unmanaged_size;
-			object new_obj = Sandbox.Library.Create<object>(t);
-			AddTotalBytes(L, nsize);
-			return new_obj;
-		}
-
 		public static object luaM_realloc_<T>(lua_State L)
 		{
 			int unmanaged_size = (int)GetUnmanagedSize(typeof(T));
 			int nsize = unmanaged_size;
-			T new_obj = (T)Sandbox.Library.Create<T>(typeof(T));
+			T new_obj = System.Activator.CreateInstance<T>();
 			AddTotalBytes(L, nsize);
 			return new_obj;
 		}
@@ -133,7 +124,7 @@ namespace KopiLua
 			int old_size = (obj == null) ? 0 : unmanaged_size;
 			int osize = old_size * unmanaged_size;
 			int nsize = unmanaged_size;
-			T new_obj = (T)Sandbox.Library.Create<T>( typeof(T));
+			T new_obj = System.Activator.CreateInstance<T>();
 			SubtractTotalBytes(L, osize);
 			AddTotalBytes(L, nsize);
 			return new_obj;
@@ -149,7 +140,7 @@ namespace KopiLua
 			for (int i = 0; i < Math.Min(old_size, new_size); i++)
 				new_block[i] = old_block[i];
 			for (int i = old_size; i < new_size; i++)
-				new_block[i] = (T)Sandbox.Library.Create<T>( typeof(T));
+				new_block[i] = System.Activator.CreateInstance<T>();
 			if (CanIndex(typeof(T)))
 				for (int i = 0; i < new_size; i++)
 				{

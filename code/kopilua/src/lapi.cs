@@ -1001,24 +1001,6 @@ namespace KopiLua
 		}
 
 
-		public static lua_Alloc lua_getallocf (lua_State L, ref object ud) {
-		  lua_Alloc f;
-		  lua_lock(L);
-		  if (ud != null) ud = G(L).ud;
-		  f = G(L).frealloc;
-		  lua_unlock(L);
-		  return f;
-		}
-
-
-		public static void lua_setallocf (lua_State L, lua_Alloc f, object ud) {
-		  lua_lock(L);
-		  G(L).ud = ud;
-		  G(L).frealloc = f;
-		  lua_unlock(L);
-		}
-
-
 		public static object lua_newuserdata(lua_State L, uint size)
 		{
 			Udata u;
@@ -1032,12 +1014,12 @@ namespace KopiLua
 		}
 
 		// this one is used internally only
-		internal static object lua_newuserdata(lua_State L, Type t)
+		internal static object lua_newuserdata<T>(lua_State L)
 		{
 			Udata u;
 			lua_lock(L);
 			luaC_checkGC(L);
-			u = luaS_newudata(L, t, getcurrenv(L));
+			u = luaS_newudata<T>(L, getcurrenv(L));
 			setuvalue(L, L.top, u);
 			api_incr_top(L);
 			lua_unlock(L);
