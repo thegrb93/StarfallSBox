@@ -301,7 +301,7 @@ namespace KopiLua
         public const int LEVELS1	= 12;	/* size of the first part of the stack */
         public const int LEVELS2	= 10;	/* size of the second part of the stack */
 
-        private static int db_errorfb (lua_State L) {
+        public static int db_errorfb (lua_State L) {
             int level;
             bool firstpart = true;  /* still before eventual `...' */
             int arg;
