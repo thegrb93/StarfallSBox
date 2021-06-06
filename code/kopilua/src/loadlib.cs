@@ -459,25 +459,17 @@ namespace KopiLua
                 luaL_error(L, "loop or previous error loading module " + LUA_QS, name);
                 return 1;  /* package is already loaded */
             }
-            /* else must load it; iterate over available loaders */
-            lua_getfield(L, LUA_ENVIRONINDEX, "loaders");
+
+            /* else must load it */
+            lua_getglobal(L, "_SCRIPTS");
             if (!lua_istable(L, -1))
-                luaL_error(L, LUA_QL("package.loaders") + " must be a table");
-            lua_pushliteral(L, "");  /* error message accumulator */
-            for (i=1; ; i++) {
-                lua_rawgeti(L, -2, i);  /* get a loader */
-                if (lua_isnil(L, -1))
-                    luaL_error(L, "module " + LUA_QS + " not found:%s",
-                               name, lua_tostring(L, -2));
-                lua_pushstring(L, name);
-                lua_call(L, 1, 1);  /* call it */
-                if (lua_isfunction(L, -1))  /* did it find module? */
-                break;  /* module loaded successfully */
-                else if (lua_isstring(L, -1) != 0)  /* loader returned error message? */
-                lua_concat(L, 2);  /* accumulate it */
-                else
-                    lua_pop(L, 1);
-            }
+                luaL_error(L, LUA_QL( "_SCRIPTS" ) + " must be a table");
+
+			lua_pushliteral( L, name );
+            lua_rawget(L, -2);
+			if ( !lua_isfunction( L, -1 ) )
+				luaL_error( L, LUA_QL( "_SCRIPTS[\"" + name.ToString() + "\"]" ) + " must be a function" );
+
             lua_pushlightuserdata(L, sentinel);
             lua_setfield(L, 2, name);  /* _LOADED[name] = sentinel */
             lua_pushstring(L, name);  /* pass name as argument to module */
