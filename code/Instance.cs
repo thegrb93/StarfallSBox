@@ -42,6 +42,10 @@ namespace Starfall
 			Lua.lua_gc( L, Lua.LUA_GCSTOP, 0 );
 			Lua.luaL_openlibs( L );
 			Lua.lua_gc( L, Lua.LUA_GCRESTART, 0 );
+			
+			Lua.lua_pushlightuserdata(L, this);
+			Lua.lua_setfield(L, Lua.LUA_REGISTRYINDEX, "_INSTANCE");
+			
 			Lua.lua_sethook( L, ( Lua.lua_State L, Lua.lua_Debug ar ) => { this.cpuTimeCheck(); }, Lua.LUA_MASKCOUNT, 200 );
 
 			// Compile all the files and store in _G.scripts
