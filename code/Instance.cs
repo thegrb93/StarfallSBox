@@ -112,9 +112,9 @@ namespace Starfall
 		}
 		
 		// Checks that the type matches and returns it
-		public T GetType<T>(string name)
+		public T GetType<T>(string name, int index = 1)
 		{
-			return (T)Lua.luaL_checkudata(L, 1, name);
+			return (T)Lua.luaL_checkudata(L, index, name);
 		}
 	}
 }
