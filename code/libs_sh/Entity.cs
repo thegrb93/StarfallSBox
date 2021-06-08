@@ -1,21 +1,37 @@
-﻿using System.Collections.Generic;
 using Sandbox;
+using KopiLua;
 
 namespace Starfall
 {
-    class SFEntity
+    public partial class Instance
     {
-        Entity ent;
-        public SFEntity(Entity ent)
+        [SFInitializeSh]
+        public void InitializeEntityLib()
         {
-            this.ent = ent;
+            RegisterType("Entity", {
+                new Lua.luaL_Reg("getPos", (Lua.lua_State) => entity_getPos()),
+                new Lua.luaL_Reg(null, null)
+            });
+
+            Lua.lua_pushcfunction(L, (Lua.lua_State) => entity_ctor());
+            Lua.lua_setglobal(L, "Entity");
         }
 
-        public List<double> getPos()
+        private int entity_ctor()
         {
-            Vector3 v = ent.Position;
-            return new List<double> {v.x, v.y, v.z};
+            
+        }
+
+        private int entity_getPos()
+        {
+            Entity ent = GetType("Entity");
+            Vector3 pos = ent.Position;
+            Lua.lua_pushnumber(L, pos.x);
+            Lua.lua_pushnumber(L, pos.y);
+            Lua.lua_pushnumber(L, pos.z);
+            Lua.lua_getglobal(L, "Vector");
+            Lua.lua_call(L, 3, 1);
+            return 1;
         }
     }
-
 }
