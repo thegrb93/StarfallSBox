@@ -5,7 +5,7 @@ using KopiLua;
 
 namespace Starfall
 {
-    public class InstanceHook { }  public class UserHook { }
+	public class InstanceHook { }  public class UserHook { }
 
 	public class StarfallException : Exception
 	{
@@ -13,30 +13,30 @@ namespace Starfall
 		public StarfallException( string message, string luaStackTrace ) : base( message ) { this.luaStackTrace = luaStackTrace; }
 	}
 
-    public class Instance
-    {
-        public static List<Instance> activeInstances = new List<Instance>();
-        public static Dictionary<Player, List<Instance>> playerInstances = new Dictionary<Player, List<Instance>>();
+	public partial class Instance
+	{
+		public static List<Instance> activeInstances = new List<Instance>();
+		public static Dictionary<Player, List<Instance>> playerInstances = new Dictionary<Player, List<Instance>>();
 
-        StarfallData data;
-        Player player;
-        Entity entity;
+		StarfallData data;
+		Player player;
+		Entity entity;
 		Lua.lua_State L;
 
 
 		Dictionary<string, List<InstanceHook>> hooks = new Dictionary<string, List<InstanceHook>>();
-        Dictionary<string, List<UserHook>> userhooks = new Dictionary<string, List<UserHook>>();
+		Dictionary<string, List<UserHook>> userhooks = new Dictionary<string, List<UserHook>>();
 
 
-        public Instance(StarfallData data, Player player, Entity entity)
-        {
-            this.data = data;
-            this.player = player;
-            this.entity = entity;
+		public Instance(StarfallData data, Player player, Entity entity)
+		{
+			this.data = data;
+			this.player = player;
+			this.entity = entity;
 		}
 
 
-        public void Compile()
+		public void Compile()
 		{
 			L = Lua.lua_open();
 			Lua.lua_gc( L, Lua.LUA_GCSTOP, 0 );
@@ -77,5 +77,43 @@ namespace Starfall
 		{
 
 		}
-    }
+		
+		// Registers library in _G
+		public void RegisterLibrary(string name, luaL_Reg[] methods)
+		{
+			Lua.lua_createtable(L, 0, methods.Length-1);
+			Lua.luaL_register(L, null, methods);
+			Lua.lua_setglobal(L, name);
+		}
+		
+		// Pushes the new metatable type on the stack
+		public void RegisterType(string name)
+		{
+			Lua.luaL_newmetatable(L, name);
+		}
+		
+		// Pushes the new metatable type on the stack and sets __index
+		public void RegisterType(string name, luaL_Reg[] methods)
+		{
+			Lua.lua_createtable(L, name);
+			Lua.lua_pushvalue(L, -1);
+			Lua.lua_setfield(L, -2, "__index");
+			Lua.luaL_register(L, null, methods);
+		}
+		
+		// Pushes new userdata on stack and returns it
+		public T CreateType<T>(string name)
+		{
+			T obj = (T)Lua.lua_newuserdata(L, typeof(T));
+			Lua.luaL_getmetatable(L, name);
+			Lua.lua_setmetatable(L, -2);
+			return obj;
+		}
+		
+		// Checks that the type matches and returns it
+		public T GetType<T>(string name)
+		{
+			return (T)Lua.luaL_checkudata(L, 1, name);
+		}
+	}
 }
