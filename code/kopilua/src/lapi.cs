@@ -1001,6 +1001,18 @@ namespace KopiLua
 		}
 
 
+		public static void lua_newuserdata<T>(lua_State L, T obj)
+		{
+			Udata u;
+			lua_lock(L);
+			luaC_checkGC(L);
+			u = luaS_newudata<T>(L, getcurrenv(L), obj);
+			setuvalue(L, L.top, u);
+			api_incr_top(L);
+			lua_unlock(L);
+			return u.user_data;
+		}
+
 		public static object lua_newuserdata(lua_State L, uint size)
 		{
 			Udata u;
