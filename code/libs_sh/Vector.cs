@@ -5,38 +5,38 @@ namespace KopiLua
 {
 	public partial class Lua
 	{
-		public static void lua_pushvector(Lua.lua_State L, double x, double y, double z)
+		public static void lua_pushvector( Lua.lua_State L, double x, double y, double z )
 		{
-			Lua.lua_createtable()
-			Lua.lua_pushnumber(L, x);
-			Lua.lua_rawseti(L, -2, 1);
-			Lua.lua_pushnumber(L, y);
-			Lua.lua_rawseti(L, -2, 2);
-			Lua.lua_pushnumber(L, z);
-			Lua.lua_rawseti(L, -2, 3);
-			Lua.luaL_getmetatable(L, "Vector");
-			Lua.lua_setmetatable(L, -2);
+			Lua.lua_createtable( L, 3, 0 );
+			Lua.lua_pushnumber( L, x );
+			Lua.lua_rawseti( L, -2, 1 );
+			Lua.lua_pushnumber( L, y );
+			Lua.lua_rawseti( L, -2, 2 );
+			Lua.lua_pushnumber( L, z );
+			Lua.lua_rawseti( L, -2, 3 );
+			Lua.luaL_getmetatable( L, "Vector" );
+			Lua.lua_setmetatable( L, -2 );
 		}
-		public static void lua_pushvector(Lua.lua_State L, Vector3 v)
+		public static void lua_pushvector( Lua.lua_State L, Vector3 v )
 		{
-			lua_pushvector(Lua.lua_State L, v.x, v.y, v.z);
+			lua_pushvector( L, (double)v.x, (double)v.y, (double)v.z );
 		}
-		public static void lua_tovector(Lua.lua_State L, int index, out double x, out double y, out double z)
+		public static void lua_tovector( Lua.lua_State L, int index, out double x, out double y, out double z )
 		{
-			Lua.luaL_checktable(L, index);
-			Lua.lua_rawgeti(L, index, 1);
-			x = Lua.lua_tonumber(L, -1);
-			Lua.lua_rawgeti(L, index, 2);
-			y = Lua.lua_tonumber(L, -1);
-			Lua.lua_rawgeti(L, index, 3);
-			z = Lua.lua_tonumber(L, -1);
-			Lua.lua_pop(3);
+			Lua.luaL_checktype( L, index, Lua.LUA_TTABLE );
+			Lua.lua_rawgeti( L, index, 1 );
+			x = Lua.lua_tonumber( L, -1 );
+			Lua.lua_rawgeti( L, index, 2 );
+			y = Lua.lua_tonumber( L, -1 );
+			Lua.lua_rawgeti( L, index, 3 );
+			z = Lua.lua_tonumber( L, -1 );
+			Lua.lua_pop( L, 3 );
 		}
-		public static Vector3 lua_tovector(Lua.lua_State L, int index)
+		public static Vector3 lua_tovector( Lua.lua_State L, int index )
 		{
-			Vector3 ret = new Vector3();
-			lua_tovector(L, index, ret.x, ret.y, ret.z);
-			return ret;
+			double x, y, z;
+			lua_tovector( L, index, out x, out y, out z );
+			return new Vector3( (float)x, (float)y, (float)z );
 		}
 	}
 }
@@ -46,21 +46,21 @@ namespace Starfall
 {
 	public partial class Instance
 	{
-		[SFInitializeSh]
+		[SFInitialize( 1 )]
 		public void VectorLib()
 		{
-			RegisterType("Vector", {
+			RegisterType( "Vector", new Lua.luaL_Reg[] {
 				new Lua.luaL_Reg("getAngle", (Lua.lua_State L) => {
 					Vector3 vec = Lua.lua_tovector(L, 1);
-					Lua.lua_pushangle(L, vec.GetAngle());
+					Lua.lua_pushangle(L, vec.EulerAngles);
 					return 1;
 				}),
 
 				new Lua.luaL_Reg(null, null)
-			});
-			Lua.lua_pop(L, 1);
-			
-			Lua.luaL_dostring(L, @"
+			} );
+			Lua.lua_pop( L, 1 );
+
+			Lua.luaL_dostring( L, @"
 local vec_meta = getMetatable(""Vector"")
 
 function Vector(x, y, z)
@@ -101,7 +101,7 @@ end
 function vec_meta:clone()
 	return Vector(self[1], self[2], self[3])
 end
-");
+" );
 		}
 	}
 }

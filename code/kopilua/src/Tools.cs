@@ -22,7 +22,7 @@ namespace AT.MIN
 		/// </returns>
 		public static bool IsNumericType( object o )
 		{
-			return ( o is byte ||
+			return (o is byte ||
 				o is sbyte ||
 				o is short ||
 				o is ushort ||
@@ -32,7 +32,7 @@ namespace AT.MIN
 				o is ulong ||
 				o is float ||
 				o is double ||
-				o is decimal );
+				o is decimal);
 		}
 		#endregion
 		#region IsPositive
@@ -49,29 +49,29 @@ namespace AT.MIN
 			switch ( Type.GetTypeCode( Value.GetType() ) )
 			{
 				case TypeCode.SByte:
-					return ( ZeroIsPositive ? (sbyte)Value >= 0 : (sbyte)Value > 0 );
+					return (ZeroIsPositive ? (sbyte)Value >= 0 : (sbyte)Value > 0);
 				case TypeCode.Int16:
-					return ( ZeroIsPositive ? (short)Value >= 0 : (short)Value > 0 );
+					return (ZeroIsPositive ? (short)Value >= 0 : (short)Value > 0);
 				case TypeCode.Int32:
-					return ( ZeroIsPositive ? (int)Value >= 0 : (int)Value > 0 );
+					return (ZeroIsPositive ? (int)Value >= 0 : (int)Value > 0);
 				case TypeCode.Int64:
-					return ( ZeroIsPositive ? (long)Value >= 0 : (long)Value > 0 );
+					return (ZeroIsPositive ? (long)Value >= 0 : (long)Value > 0);
 				case TypeCode.Single:
-					return ( ZeroIsPositive ? (float)Value >= 0 : (float)Value > 0 );
+					return (ZeroIsPositive ? (float)Value >= 0 : (float)Value > 0);
 				case TypeCode.Double:
-					return ( ZeroIsPositive ? (double)Value >= 0 : (double)Value > 0 );
+					return (ZeroIsPositive ? (double)Value >= 0 : (double)Value > 0);
 				case TypeCode.Decimal:
-					return ( ZeroIsPositive ? (decimal)Value >= 0 : (decimal)Value > 0 );
+					return (ZeroIsPositive ? (decimal)Value >= 0 : (decimal)Value > 0);
 				case TypeCode.Byte:
-					return ( ZeroIsPositive ? true : (byte)Value > 0 );
+					return (ZeroIsPositive ? true : (byte)Value > 0);
 				case TypeCode.UInt16:
-					return ( ZeroIsPositive ? true : (ushort)Value > 0 );
+					return (ZeroIsPositive ? true : (ushort)Value > 0);
 				case TypeCode.UInt32:
-					return ( ZeroIsPositive ? true : (uint)Value > 0 );
+					return (ZeroIsPositive ? true : (uint)Value > 0);
 				case TypeCode.UInt64:
-					return ( ZeroIsPositive ? true : (ulong)Value > 0 );
+					return (ZeroIsPositive ? true : (ulong)Value > 0);
 				case TypeCode.Char:
-					return ( ZeroIsPositive ? true : (char)Value != '\0' );
+					return (ZeroIsPositive ? true : (char)Value != '\0');
 				default:
 					return false;
 			}
@@ -89,13 +89,13 @@ namespace AT.MIN
 			switch ( Type.GetTypeCode( Value.GetType() ) )
 			{
 				case TypeCode.SByte:
-					return (byte)( (sbyte)Value );
+					return (byte)((sbyte)Value);
 				case TypeCode.Int16:
-					return (ushort)( (short)Value );
+					return (ushort)((short)Value);
 				case TypeCode.Int32:
-					return (uint)( (int)Value );
+					return (uint)((int)Value);
 				case TypeCode.Int64:
-					return (ulong)( (long)Value );
+					return (ulong)((long)Value);
 
 				case TypeCode.Byte:
 					return Value;
@@ -107,11 +107,11 @@ namespace AT.MIN
 					return Value;
 
 				case TypeCode.Single:
-					return (UInt32)( (float)Value );
+					return (UInt32)((float)Value);
 				case TypeCode.Double:
-					return (ulong)( (double)Value );
+					return (ulong)((double)Value);
 				case TypeCode.Decimal:
-					return (ulong)( (decimal)Value );
+					return (ulong)((decimal)Value);
 
 				default:
 					return null;
@@ -148,11 +148,11 @@ namespace AT.MIN
 					return Value;
 
 				case TypeCode.Single:
-					return ( Round ? (int)Math.Round( (float)Value ) : (int)( (float)Value ) );
+					return (Round ? (int)Math.Round( (float)Value ) : (int)((float)Value));
 				case TypeCode.Double:
-					return ( Round ? (long)Math.Round( (double)Value ) : (long)( (double)Value ) );
+					return (Round ? (long)Math.Round( (double)Value ) : (long)((double)Value));
 				case TypeCode.Decimal:
-					return ( Round ? Math.Round( (decimal)Value ) : (decimal)Value );
+					return (Round ? Math.Round( (decimal)Value ) : (decimal)Value);
 
 				default:
 					return null;
@@ -165,29 +165,29 @@ namespace AT.MIN
 			switch ( Type.GetTypeCode( Value.GetType() ) )
 			{
 				case TypeCode.SByte:
-					return (long)( (sbyte)Value );
+					return (long)((sbyte)Value);
 				case TypeCode.Int16:
-					return (long)( (short)Value );
+					return (long)((short)Value);
 				case TypeCode.Int32:
-					return (long)( (int)Value );
+					return (long)((int)Value);
 				case TypeCode.Int64:
 					return (long)Value;
 
 				case TypeCode.Byte:
-					return (long)( (byte)Value );
+					return (long)((byte)Value);
 				case TypeCode.UInt16:
-					return (long)( (ushort)Value );
+					return (long)((ushort)Value);
 				case TypeCode.UInt32:
-					return (long)( (uint)Value );
+					return (long)((uint)Value);
 				case TypeCode.UInt64:
-					return (long)( (ulong)Value );
+					return (long)((ulong)Value);
 
 				case TypeCode.Single:
-					return ( Round ? (long)Math.Round( (float)Value ) : (long)( (float)Value ) );
+					return (Round ? (long)Math.Round( (float)Value ) : (long)((float)Value));
 				case TypeCode.Double:
-					return ( Round ? (long)Math.Round( (double)Value ) : (long)( (double)Value ) );
+					return (Round ? (long)Math.Round( (double)Value ) : (long)((double)Value));
 				case TypeCode.Decimal:
-					return ( Round ? (long)Math.Round( (decimal)Value ) : (long)( (decimal)Value ) );
+					return (Round ? (long)Math.Round( (decimal)Value ) : (long)((decimal)Value));
 
 				default:
 					return 0;
@@ -248,7 +248,7 @@ namespace AT.MIN
 		#endregion
 		#region fprintf
 
-		internal static Regex r = new Regex(@"\%(\d*\$)?([\'\#\-\+ ]*)(\d*)(?:\.(\d+))?([hl])?([dioxXucsfeEgGpn%])");
+		internal static Regex r = new Regex( @"\%(\d*\$)?([\'\#\-\+ ]*)(\d*)(?:\.(\d+))?([hl])?([dioxXucsfeEgGpn%])" );
 
 		#endregion
 		#region sprintf
@@ -304,11 +304,11 @@ namespace AT.MIN
 				{
 					string flags = m.Groups[2].Value;
 
-					flagAlternate = ( flags.IndexOf( '#' ) >= 0 );
-					flagLeft2Right = ( flags.IndexOf( '-' ) >= 0 );
-					flagPositiveSign = ( flags.IndexOf( '+' ) >= 0 );
-					flagPositiveSpace = ( flags.IndexOf( ' ' ) >= 0 );
-					flagGroupThousands = ( flags.IndexOf( '\'' ) >= 0 );
+					flagAlternate = (flags.IndexOf( '#' ) >= 0);
+					flagLeft2Right = (flags.IndexOf( '-' ) >= 0);
+					flagPositiveSign = (flags.IndexOf( '+' ) >= 0);
+					flagPositiveSpace = (flags.IndexOf( ' ' ) >= 0);
+					flagGroupThousands = (flags.IndexOf( '\'' ) >= 0);
 
 					// positive + indicator overrides a
 					// positive space character
@@ -325,7 +325,7 @@ namespace AT.MIN
 				if ( m.Groups[3] != null && m.Groups[3].Value.Length > 0 )
 				{
 					fieldLength = Convert.ToInt32( m.Groups[3].Value );
-					flagZeroPadding = ( m.Groups[3].Value[0] == '0' );
+					flagZeroPadding = (m.Groups[3].Value[0] == '0');
 				}
 				#endregion
 
@@ -379,24 +379,24 @@ namespace AT.MIN
 					if ( shortLongIndicator == 'h' )
 					{
 						if ( o is int )
-							o = (short)( (int)o );
+							o = (short)((int)o);
 						else if ( o is long )
-							o = (short)( (long)o );
+							o = (short)((long)o);
 						else if ( o is uint )
-							o = (ushort)( (uint)o );
+							o = (ushort)((uint)o);
 						else if ( o is ulong )
-							o = (ushort)( (ulong)o );
+							o = (ushort)((ulong)o);
 					}
 					else if ( shortLongIndicator == 'l' )
 					{
 						if ( o is short )
-							o = (long)( (short)o );
+							o = (long)((short)o);
 						else if ( o is int )
-							o = (long)( (int)o );
+							o = (long)((int)o);
 						else if ( o is ushort )
-							o = (ulong)( (ushort)o );
+							o = (ulong)((ushort)o);
 						else if ( o is uint )
-							o = (ulong)( (uint)o );
+							o = (ulong)((uint)o);
 					}
 				}
 				#endregion
@@ -412,7 +412,7 @@ namespace AT.MIN
 					#endregion
 					#region d - integer
 					case 'd':   // integer
-						w = FormatNumber( ( flagGroupThousands ? "n" : "d" ), flagAlternate,
+						w = FormatNumber( (flagGroupThousands ? "n" : "d"), flagAlternate,
 										fieldLength, int.MinValue, flagLeft2Right,
 										flagPositiveSign, flagPositiveSpace,
 										paddingCharacter, o );
@@ -449,7 +449,7 @@ namespace AT.MIN
 					#endregion
 					#region u - unsigned integer
 					case 'u':   // unsigned integer
-						w = FormatNumber( ( flagGroupThousands ? "n" : "d" ), flagAlternate,
+						w = FormatNumber( (flagGroupThousands ? "n" : "d"), flagAlternate,
 										fieldLength, int.MinValue, flagLeft2Right,
 										false, false,
 										paddingCharacter, ToUnsigned( o ) );
@@ -461,15 +461,15 @@ namespace AT.MIN
 						if ( IsNumericType( o ) )
 							w = Convert.ToChar( o ).ToString();
 						else if ( o is char )
-							w = ( (char)o ).ToString();
-						else if ( o is string && ( (string)o ).Length > 0 )
-							w = ( (string)o )[0].ToString();
+							w = ((char)o).ToString();
+						else if ( o is string && ((string)o).Length > 0 )
+							w = ((string)o)[0].ToString();
 						defaultParamIx++;
 						break;
 					#endregion
 					#region s - string
 					case 's':   // string
-						string t = "{0" + ( fieldLength != int.MinValue ? "," + ( flagLeft2Right ? "-" : String.Empty ) + fieldLength.ToString() : String.Empty ) + ":s}";
+						string t = "{0" + (fieldLength != int.MinValue ? "," + (flagLeft2Right ? "-" : String.Empty) + fieldLength.ToString() : String.Empty) + ":s}";
 						w = o.ToString();
 						if ( fieldPrecision >= 0 )
 							w = w.Substring( 0, fieldPrecision );
@@ -484,7 +484,7 @@ namespace AT.MIN
 					#endregion
 					#region f - double number
 					case 'f':   // double
-						w = FormatNumber( ( flagGroupThousands ? "n" : "f" ), flagAlternate,
+						w = FormatNumber( (flagGroupThousands ? "n" : "f"), flagAlternate,
 										fieldLength, fieldPrecision, flagLeft2Right,
 										flagPositiveSign, flagPositiveSpace,
 										paddingCharacter, o );
@@ -533,7 +533,7 @@ namespace AT.MIN
 #if XBOX || SILVERLIGHT
 							w = ( (IntPtr)o ).ToString();
 #else
-							w = "0x" + ( (IntPtr)o ).ToString( "x" );
+							w = "0x" + ((IntPtr)o).ToString( "x" );
 #endif
 						defaultParamIx++;
 						break;
@@ -575,11 +575,11 @@ namespace AT.MIN
 											char Padding, object Value )
 		{
 			string w = String.Empty;
-			string lengthFormat = "{0" + ( FieldLength != int.MinValue ?
-											"," + ( Left2Right ?
+			string lengthFormat = "{0" + (FieldLength != int.MinValue ?
+											"," + (Left2Right ?
 													"-" :
-													String.Empty ) + FieldLength.ToString() :
-											String.Empty ) + "}";
+													String.Empty) + FieldLength.ToString() :
+											String.Empty) + "}";
 
 			if ( IsNumericType( Value ) )
 			{
@@ -594,7 +594,7 @@ namespace AT.MIN
 				else
 				{
 					if ( FieldLength != int.MinValue )
-						w = w.PadLeft( FieldLength - ( Alternate && w != "0" ? 1 : 0 ), Padding );
+						w = w.PadLeft( FieldLength - (Alternate && w != "0" ? 1 : 0), Padding );
 					if ( Alternate && w != "0" )
 						w = "0" + w;
 				}
@@ -610,14 +610,14 @@ namespace AT.MIN
 											char Padding, object Value )
 		{
 			string w = String.Empty;
-			string lengthFormat = "{0" + ( FieldLength != int.MinValue ?
-											"," + ( Left2Right ?
+			string lengthFormat = "{0" + (FieldLength != int.MinValue ?
+											"," + (Left2Right ?
 													"-" :
-													String.Empty ) + FieldLength.ToString() :
-											String.Empty ) + "}";
-			string numberFormat = "{0:" + NativeFormat + ( FieldPrecision != int.MinValue ?
+													String.Empty) + FieldLength.ToString() :
+											String.Empty) + "}";
+			string numberFormat = "{0:" + NativeFormat + (FieldPrecision != int.MinValue ?
 											FieldPrecision.ToString() :
-											String.Empty ) + "}";
+											String.Empty) + "}";
 
 			if ( IsNumericType( Value ) )
 			{
@@ -626,15 +626,15 @@ namespace AT.MIN
 				if ( Left2Right || Padding == ' ' )
 				{
 					if ( Alternate )
-						w = ( NativeFormat == "x" ? "0x" : "0X" ) + w;
+						w = (NativeFormat == "x" ? "0x" : "0X") + w;
 					w = String.Format( lengthFormat, w );
 				}
 				else
 				{
 					if ( FieldLength != int.MinValue )
-						w = w.PadLeft( FieldLength - ( Alternate ? 2 : 0 ), Padding );
+						w = w.PadLeft( FieldLength - (Alternate ? 2 : 0), Padding );
 					if ( Alternate )
-						w = ( NativeFormat == "x" ? "0x" : "0X" ) + w;
+						w = (NativeFormat == "x" ? "0x" : "0X") + w;
 				}
 			}
 
@@ -649,24 +649,24 @@ namespace AT.MIN
 											char Padding, object Value )
 		{
 			string w = String.Empty;
-			string lengthFormat = "{0" + ( FieldLength != int.MinValue ?
-											"," + ( Left2Right ?
+			string lengthFormat = "{0" + (FieldLength != int.MinValue ?
+											"," + (Left2Right ?
 													"-" :
-													String.Empty ) + FieldLength.ToString() :
-											String.Empty ) + "}";
-			string numberFormat = "{0:" + NativeFormat + ( FieldPrecision != int.MinValue ?
+													String.Empty) + FieldLength.ToString() :
+											String.Empty) + "}";
+			string numberFormat = "{0:" + NativeFormat + (FieldPrecision != int.MinValue ?
 											FieldPrecision.ToString() :
-											"0" ) + "}";
+											"0") + "}";
 
 			if ( IsNumericType( Value ) )
 			{
-				w = String.Format(numberFormat, Value );
+				w = String.Format( numberFormat, Value );
 
 				if ( Left2Right || Padding == ' ' )
 				{
 					if ( IsPositive( Value, true ) )
-						w = ( PositiveSign ?
-								"+" : ( PositiveSpace ? " " : String.Empty ) ) + w;
+						w = (PositiveSign ?
+								"+" : (PositiveSpace ? " " : String.Empty)) + w;
 					w = String.Format( lengthFormat, w );
 				}
 				else
@@ -676,8 +676,8 @@ namespace AT.MIN
 					if ( FieldLength != int.MinValue )
 						w = w.PadLeft( FieldLength - 1, Padding );
 					if ( IsPositive( Value, true ) )
-						w = ( PositiveSign ?
-								"+" : ( PositiveSpace ? " " : String.Empty ) ) + w;
+						w = (PositiveSign ?
+								"+" : (PositiveSpace ? " " : String.Empty)) + w;
 					else
 						w = "-" + w;
 				}

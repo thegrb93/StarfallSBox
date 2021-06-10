@@ -23,14 +23,15 @@ namespace KopiLua
 		};
 
 
-		public static void luaL_openlibs (lua_State L) {
-		  for (int i=0; i<lualibs.Length-1; i++)
-		  {
-			luaL_Reg lib = lualibs[i];
-			lua_pushcfunction(L, lib.func);
-			lua_pushstring(L, lib.name);
-			lua_call(L, 1, 0);
-		  }
+		public static void luaL_openlibs( lua_State L )
+		{
+			for ( int i = 0; i < lualibs.Length - 1; i++ )
+			{
+				luaL_Reg lib = lualibs[i];
+				lua_pushcfunction( L, lib.func );
+				lua_pushstring( L, lib.name );
+				lua_call( L, 1, 0 );
+			}
 		}
 
 	}

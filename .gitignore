@@ -15,6 +15,7 @@
 # User-specific files (MonoDevelop/Xamarin Studio)
 *.userprefs
 accesslist.txt
+.intermediate
 
 # Mono auto generated files
 mono_crash.*
