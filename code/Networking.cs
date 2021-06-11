@@ -69,12 +69,18 @@ namespace Starfall
 				}
 			}
 		}
-		public class SFFile()
+		public class SFFile
 		{
+			string filename;
 			string code;
 			PreprocessDirectives directives;
-			public SFFile(string code)
+			public SFFile(string filename)
 			{
+				SFFile(filename, FileSystem.Mounted.ReadAllBytes(filename));
+			}
+			public SFFile(string filename, string code)
+			{
+				this.filename = filename;
 				this.code = code;
 				this.directives = new PreprocessDirectives(code);
 			}
@@ -95,5 +101,43 @@ namespace Starfall
 
 	class Networking
 	{
+		public static StarfallData CollectFiles(string mainfile)
+		{
+			Dictionary<string, SFFile> files = new Dictionary<string, SFFile>();
+			HashSet<string> directoriesLoaded = new HashSet<string>();
+			Stack<string> filesToLoad = new Stack(){mainfile};
+			Stack<string> directoriesToLoad = new Stack();
+
+			while(!filesToLoad.isEmpty())
+			{
+				string filename = filesToLoad.Pop();
+				if(!files.Contains(filename))
+				{
+					try
+					{
+						SFFile file = new SFFile(filename);
+						file.directives.includes.ForEach((string n) => filesToLoad.Push(n));
+						file.directives.includedirs.ForEach((string n) => directoriesToLoad.Push(n));
+						files[filename] = file;
+					}
+					catch(Exception e)
+					{
+						e.Message = "Failed to load file: "+filename+" ("+e.Message+")";
+						throw e;
+					}
+				}
+
+				while(!directoriesToLoad.isEmpty())
+				{
+					string dir = directoriesToLoad.Pop();
+					if(directoriesLoaded.Add(dir))
+					{
+						// For files in dir, add to stack
+					}
+				}
+				
+			}
+			return new StarfallData(files, mainfile);
+		}
 	}
 }
