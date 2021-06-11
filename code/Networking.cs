@@ -1,7 +1,8 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
-using System.Text;
 using System.Text.RegularExpressions;
+using Sandbox;
 
 namespace Starfall
 {
@@ -9,8 +10,8 @@ namespace Starfall
 	{
 		public class PreprocessDirectives
 		{
-			static readonly Regex directivesRgx = new Regex("--@\\s*(\\w+)([^\\n]*)");
-			static readonly var directiveActions = new Dictionary<string, Action<PreprocessDirectives, string>>(){
+			static readonly Regex directivesRgx = new Regex( "--@\\s*(\\w+)([^\\n]*)" );
+			static readonly Dictionary<string, Action<PreprocessDirectives, string>> directiveActions = new Dictionary<string, Action<PreprocessDirectives, string>>(){
 				{"include", (PreprocessDirectives directives, string value) => {
 					directives.includes.Add(value);
 				}},
@@ -18,13 +19,13 @@ namespace Starfall
 					directives.includedirs.Add(value);
 				}},
 				{"name", (PreprocessDirectives directives, string value) => {
-					directives.name = value;
+					directives.scriptname = value;
 				}},
 				{"author", (PreprocessDirectives directives, string value) => {
-					directives.author = value;
+					directives.scriptauthor = value;
 				}},
 				{"model", (PreprocessDirectives directives, string value) => {
-					directives.model = value;
+					directives.scriptmodel = value;
 				}},
 				{"clientmain", (PreprocessDirectives directives, string value) => {
 					directives.scriptclientmain = value;
@@ -33,36 +34,36 @@ namespace Starfall
 					directives.superuser = true;
 				}},
 				{"server", (PreprocessDirectives directives, string value) => {
-					directives.realm = Host.Server;
+					directives.realm = "Server";
 				}},
 				{"shared", (PreprocessDirectives directives, string value) => {
-					directives.realm = Host.Shared;
+					directives.realm = "Shared";
 				}},
 				{"client", (PreprocessDirectives directives, string value) => {
-					directives.realm = Host.Client;
+					directives.realm = "Client";
 				}},
 			};
-			
+
 			public List<string> includes = new List<string>();
 			public List<string> includedirs = new List<string>();
 			public string scriptname;
 			public string scriptauthor;
 			public string scriptmodel;
 			public string scriptclientmain;
-			public Host realm = Host.Shared;
+			public string realm;
 			public bool superuser = false;
 
-			public PreprocessDirectives(string code)
+			public PreprocessDirectives( string code )
 			{
-				foreach(Match match in directivesRgx.matches(code))
+				foreach ( Match match in directivesRgx.Matches( code ) )
 				{
-					string directive = match.Groups[1];
-					string value = match.Groups[2].Trim();
+					string directive = match.Groups[1].Value;
+					string value = match.Groups[2].Value.Trim();
 					try
 					{
-						directiveActions[directive](this, value);
+						directiveActions[directive]( this, value );
 					}
-					catch (KeyNotFoundException)
+					catch ( KeyNotFoundException )
 					{
 						throw new Exception( "Invalid directive: " + directive );
 					}
@@ -71,21 +72,20 @@ namespace Starfall
 		}
 		public class SFFile
 		{
-			string filename;
-			string code;
-			PreprocessDirectives directives;
-			public SFFile(string filename)
+			public string filename;
+			public string code;
+			public PreprocessDirectives directives;
+			public SFFile( string filename ) : this( filename, FileSystem.Mounted.ReadAllText( filename ) )
 			{
-				SFFile(filename, FileSystem.Mounted.ReadAllBytes(filename));
 			}
-			public SFFile(string filename, string code)
+			public SFFile( string filename, string code )
 			{
 				this.filename = filename;
 				this.code = code;
-				this.directives = new PreprocessDirectives(code);
+				this.directives = new PreprocessDirectives( code );
 			}
 		}
-		
+
 		public string mainfile;
 		public Dictionary<string, SFFile> files;
 		public StarfallData( Dictionary<string, SFFile> files, string mainfile )
@@ -101,43 +101,43 @@ namespace Starfall
 
 	class Networking
 	{
-		public static StarfallData CollectFiles(string mainfile)
+		public static StarfallData CollectFiles( string mainfile )
 		{
-			Dictionary<string, SFFile> files = new Dictionary<string, SFFile>();
+			Dictionary<string, StarfallData.SFFile> files = new Dictionary<string, StarfallData.SFFile>();
 			HashSet<string> directoriesLoaded = new HashSet<string>();
-			Stack<string> filesToLoad = new Stack(){mainfile};
-			Stack<string> directoriesToLoad = new Stack();
+			Stack<string> filesToLoad = new Stack<string>();
+			filesToLoad.Push( mainfile );
+			Stack<string> directoriesToLoad = new Stack<string>();
 
-			while(!filesToLoad.isEmpty())
+			while ( filesToLoad.Count > 0 )
 			{
 				string filename = filesToLoad.Pop();
-				if(!files.Contains(filename))
+				if ( !files.ContainsKey( filename ) )
 				{
 					try
 					{
-						SFFile file = new SFFile(filename);
-						file.directives.includes.ForEach((string n) => filesToLoad.Push(n));
-						file.directives.includedirs.ForEach((string n) => directoriesToLoad.Push(n));
+						StarfallData.SFFile file = new StarfallData.SFFile( filename );
+						file.directives.includes.ForEach( ( string n ) => filesToLoad.Push( n ) );
+						file.directives.includedirs.ForEach( ( string n ) => directoriesToLoad.Push( n ) );
 						files[filename] = file;
 					}
-					catch(Exception e)
+					catch ( Exception e )
 					{
-						e.Message = "Failed to load file: "+filename+" ("+e.Message+")";
-						throw e;
+						throw new Exception( "Failed to load file: " + filename + " (" + e.Message + ")", e );
 					}
 				}
 
-				while(!directoriesToLoad.isEmpty())
+				while ( directoriesToLoad.Count > 0 )
 				{
 					string dir = directoriesToLoad.Pop();
-					if(directoriesLoaded.Add(dir))
+					if ( directoriesLoaded.Add( dir ) )
 					{
 						// For files in dir, add to stack
 					}
 				}
-				
+
 			}
-			return new StarfallData(files, mainfile);
+			return new StarfallData( files, mainfile );
 		}
 	}
 }

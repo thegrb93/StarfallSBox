@@ -58,10 +58,10 @@ namespace Starfall
 
 			// Compile all the files and store in _G.scripts
 			Lua.lua_createtable( L, 0, data.files.Count );
-			foreach ( KeyValuePair<string, string> file in data.files )
+			foreach ( KeyValuePair<string, StarfallData.SFFile> file in data.files )
 			{
 				Lua.lua_pushlstring( L, file.Key, (uint)file.Key.Length );
-				if ( Lua.luaL_loadbuffer( L, file.Value, (uint)file.Value.Length, "SF: " + file.Key ) != 0 )
+				if ( Lua.luaL_loadbuffer( L, file.Value.code, (uint)file.Value.code.Length, "SF: " + file.Key ) != 0 )
 				{
 					string err = Lua.lua_tostring( L, -1 ).ToString();
 					Lua.lua_settop( L, 0 ); // Clear the stack

@@ -14,7 +14,7 @@ namespace Sandbox.Tools
 			if ( !base.IsPreviewTraceValid( tr ) )
 				return false;
 
-			if ( tr.Entity is StarfallEntity )
+			if ( tr.Entity is StarfallProcessor )
 				return false;
 
 			return true;
