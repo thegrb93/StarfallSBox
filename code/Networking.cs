@@ -94,7 +94,6 @@ namespace Starfall
 			Stack<string> filesToLoad = new Stack<string>();
 			filesToLoad.Push( mainfile );
 			Stack<string> directoriesToLoad = new Stack<string>();
-			SFFile main = null;
 
 			while ( filesToLoad.Count > 0 )
 			{
@@ -107,7 +106,6 @@ namespace Starfall
 						file.directives.includes.ForEach( ( string n ) => filesToLoad.Push( n ) );
 						file.directives.includedirs.ForEach( ( string n ) => directoriesToLoad.Push( n ) );
 						files.Add( file );
-						if( main is null ) main = file;
 					}
 					catch ( Exception e )
 					{
