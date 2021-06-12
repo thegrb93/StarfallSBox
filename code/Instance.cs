@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using Sandbox;
 using KopiLua;
+using System.Diagnostics;
 
 namespace Starfall
 {
@@ -49,7 +50,7 @@ namespace Starfall
 			this.entity = entity;
 		}
 
-		public void Compile(List<SFFile> files)
+		public void Compile( List<SFFile> files )
 		{
 			L = Lua.lua_open();
 			Lua.lua_gc( L, Lua.LUA_GCSTOP, 0 );
@@ -62,18 +63,18 @@ namespace Starfall
 			Lua.lua_createtable( L, 0, files.Count );
 			foreach ( SFFile file in files )
 			{
-				switch( file.directive.realm )
+				switch ( file.directives.realm )
 				{
-				case "Server":
-					if( !Host.IsServer ) continue;
-					break;
-				case "Client":
-					if( !Host.IsClient ) continue;
-					break;
+					case "Server":
+						if ( !Host.IsServer ) continue;
+						break;
+					case "Client":
+						if ( !Host.IsClient ) continue;
+						break;
 				}
 
 				Lua.lua_pushlstring( L, file.filename, (uint)file.filename.Length );
-				if ( Lua.luaL_loadbuffer( L, file.code, (uint)file.code.Length, "SF: " + file.Key ) != 0 )
+				if ( Lua.luaL_loadbuffer( L, file.code, (uint)file.code.Length, "SF: " + file.filename ) != 0 )
 				{
 					string err = Lua.lua_tostring( L, -1 ).ToString();
 					Lua.lua_settop( L, 0 ); // Clear the stack
@@ -88,12 +89,12 @@ namespace Starfall
 			Lua.lua_setglobal( L, "getMetatable" );
 
 			SFFile main = files[0];
-			if( Host.IsClient )
+			if ( Host.IsClient )
 			{
-				if( !main.directives.clientmain.IsNullOrEmpty() )
+				if ( !string.IsNullOrEmpty( main.directives.scriptclientmain ) )
 				{
-					main = files.Find( (SFFile f) => f.filename == main.directives.clientmain );
-					if( main is null ) throw new StarfallException( "Couldn't load clientmain: " + main.directives.clientmain, "" );
+					main = files.Find( ( SFFile f ) => f.filename == main.directives.scriptclientmain );
+					if ( main is null ) throw new StarfallException( "Couldn't load clientmain: " + main.directives.scriptclientmain, "" );
 				}
 			}
 			// Call mainfile
@@ -111,7 +112,7 @@ namespace Starfall
 
 		public void Error( string message )
 		{
-			
+
 		}
 
 		Stopwatch cpuTimer = new Stopwatch();
@@ -119,12 +120,12 @@ namespace Starfall
 
 		double avgCpu()
 		{
-			return cpuAverage*(1-cpuQuotaRatio) + cpuTimer.Elapsed.TotalSeconds*cpuQuotaRatio;
+			return cpuAverage * (1 - cpuQuotaRatio) + cpuTimer.Elapsed.TotalSeconds * cpuQuotaRatio;
 		}
 
 		void cpuTimeCheck()
 		{
-			if( avgCpu() > cpuQuota )
+			if ( avgCpu() > cpuQuota )
 			{
 				Lua.lua_pushliteral( L, "CPU quota exceeded!" );
 				Lua.lua_error( L );
@@ -136,7 +137,7 @@ namespace Starfall
 		{
 			cpuAverage = avgCpu();
 			cpuTimer.Restart();
-			CallHook("Think")
+			CallHook( "Think" );
 		}
 
 		// Registers library in _G
@@ -186,7 +187,7 @@ namespace Starfall
 			return (T)Lua.luaL_checkudata( L, index, name );
 		}
 
-		public void CallHook(string name)
+		public void CallHook( string name )
 		{
 			cpuTimer.Start();
 			Lua.lua_pushcfunction( L, Lua.db_errorfb );

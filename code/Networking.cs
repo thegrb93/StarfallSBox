@@ -70,8 +70,8 @@ namespace Starfall
 	}
 	public class SFFile : NetworkComponent
 	{
-		[Net] public string filename;
-		[Net] public string code;
+		public string filename;
+		public string code;
 		public PreprocessDirectives directives;
 		public SFFile( string filename ) : this( filename, FileSystem.Mounted.ReadAllText( filename ) )
 		{
@@ -90,9 +90,10 @@ namespace Starfall
 		{
 			List<SFFile> files = new List<SFFile>();
 			HashSet<string> filesLoaded = new HashSet<string>();
-			HashSet<string> directoriesLoaded = new HashSet<string>();
 			Stack<string> filesToLoad = new Stack<string>();
 			filesToLoad.Push( mainfile );
+
+			HashSet<string> directoriesLoaded = new HashSet<string>();
 			Stack<string> directoriesToLoad = new Stack<string>();
 
 			while ( filesToLoad.Count > 0 )
