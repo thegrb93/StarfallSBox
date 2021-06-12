@@ -6,120 +6,108 @@ using Sandbox;
 
 namespace Starfall
 {
-	public class StarfallData
+	public class PreprocessDirectives
 	{
-		public class PreprocessDirectives
+		static readonly Regex directivesRgx = new Regex( "--@\\s*(\\w+)([^\\n]*)" );
+		static readonly Dictionary<string, Action<PreprocessDirectives, string>> directiveActions = new Dictionary<string, Action<PreprocessDirectives, string>>(){
+			{"include", (PreprocessDirectives directives, string value) => {
+				directives.includes.Add(value);
+			}},
+			{"includedir", (PreprocessDirectives directives, string value) => {
+				directives.includedirs.Add(value);
+			}},
+			{"name", (PreprocessDirectives directives, string value) => {
+				directives.scriptname = value;
+			}},
+			{"author", (PreprocessDirectives directives, string value) => {
+				directives.scriptauthor = value;
+			}},
+			{"model", (PreprocessDirectives directives, string value) => {
+				directives.scriptmodel = value;
+			}},
+			{"clientmain", (PreprocessDirectives directives, string value) => {
+				directives.scriptclientmain = value;
+			}},
+			{"superuser", (PreprocessDirectives directives, string value) => {
+				directives.superuser = true;
+			}},
+			{"server", (PreprocessDirectives directives, string value) => {
+				directives.realm = "Server";
+			}},
+			{"shared", (PreprocessDirectives directives, string value) => {
+				directives.realm = "Shared";
+			}},
+			{"client", (PreprocessDirectives directives, string value) => {
+				directives.realm = "Client";
+			}},
+		};
+
+		public List<string> includes = new List<string>();
+		public List<string> includedirs = new List<string>();
+		public string scriptname;
+		public string scriptauthor;
+		public string scriptmodel;
+		public string scriptclientmain;
+		public string realm;
+		public bool superuser = false;
+
+		public PreprocessDirectives( string code )
 		{
-			static readonly Regex directivesRgx = new Regex( "--@\\s*(\\w+)([^\\n]*)" );
-			static readonly Dictionary<string, Action<PreprocessDirectives, string>> directiveActions = new Dictionary<string, Action<PreprocessDirectives, string>>(){
-				{"include", (PreprocessDirectives directives, string value) => {
-					directives.includes.Add(value);
-				}},
-				{"includedir", (PreprocessDirectives directives, string value) => {
-					directives.includedirs.Add(value);
-				}},
-				{"name", (PreprocessDirectives directives, string value) => {
-					directives.scriptname = value;
-				}},
-				{"author", (PreprocessDirectives directives, string value) => {
-					directives.scriptauthor = value;
-				}},
-				{"model", (PreprocessDirectives directives, string value) => {
-					directives.scriptmodel = value;
-				}},
-				{"clientmain", (PreprocessDirectives directives, string value) => {
-					directives.scriptclientmain = value;
-				}},
-				{"superuser", (PreprocessDirectives directives, string value) => {
-					directives.superuser = true;
-				}},
-				{"server", (PreprocessDirectives directives, string value) => {
-					directives.realm = "Server";
-				}},
-				{"shared", (PreprocessDirectives directives, string value) => {
-					directives.realm = "Shared";
-				}},
-				{"client", (PreprocessDirectives directives, string value) => {
-					directives.realm = "Client";
-				}},
-			};
-
-			public List<string> includes = new List<string>();
-			public List<string> includedirs = new List<string>();
-			public string scriptname;
-			public string scriptauthor;
-			public string scriptmodel;
-			public string scriptclientmain;
-			public string realm;
-			public bool superuser = false;
-
-			public PreprocessDirectives( string code )
+			foreach ( Match match in directivesRgx.Matches( code ) )
 			{
-				foreach ( Match match in directivesRgx.Matches( code ) )
+				string directive = match.Groups[1].Value;
+				string value = match.Groups[2].Value.Trim();
+				try
 				{
-					string directive = match.Groups[1].Value;
-					string value = match.Groups[2].Value.Trim();
-					try
-					{
-						directiveActions[directive]( this, value );
-					}
-					catch ( KeyNotFoundException )
-					{
-						throw new Exception( "Invalid directive: " + directive );
-					}
+					directiveActions[directive]( this, value );
+				}
+				catch ( KeyNotFoundException )
+				{
+					throw new Exception( "Invalid directive: " + directive );
 				}
 			}
 		}
-		public class SFFile
+	}
+	public class SFFile : NetworkComponent
+	{
+		[Net] public string filename;
+		[Net] public string code;
+		public PreprocessDirectives directives;
+		public SFFile( string filename ) : this( filename, FileSystem.Mounted.ReadAllText( filename ) )
 		{
-			public string filename;
-			public string code;
-			public PreprocessDirectives directives;
-			public SFFile( string filename ) : this( filename, FileSystem.Mounted.ReadAllText( filename ) )
-			{
-			}
-			public SFFile( string filename, string code )
-			{
-				this.filename = filename;
-				this.code = code;
-				this.directives = new PreprocessDirectives( code );
-			}
 		}
-
-		public string mainfile;
-		public Dictionary<string, SFFile> files;
-		public StarfallData( Dictionary<string, SFFile> files, string mainfile )
+		public SFFile( string filename, string code )
 		{
-			if ( !files.ContainsKey( mainfile ) )
-			{
-				throw new Exception( "Mainfile is missing from files: " + files + " (" + mainfile + ")" );
-			}
-			this.files = files;
-			this.mainfile = mainfile;
+			this.filename = filename;
+			this.code = code;
+			this.directives = new PreprocessDirectives( code );
 		}
 	}
 
 	class Networking
 	{
-		public static StarfallData CollectFiles( string mainfile )
+		public static List<SFFile> CollectFiles( string mainfile )
 		{
-			Dictionary<string, StarfallData.SFFile> files = new Dictionary<string, StarfallData.SFFile>();
+			List<SFFile> files = new List<SFFile>();
+			HashSet<string> filesLoaded = new HashSet<string>();
 			HashSet<string> directoriesLoaded = new HashSet<string>();
 			Stack<string> filesToLoad = new Stack<string>();
 			filesToLoad.Push( mainfile );
 			Stack<string> directoriesToLoad = new Stack<string>();
+			SFFile main = null;
 
 			while ( filesToLoad.Count > 0 )
 			{
 				string filename = filesToLoad.Pop();
-				if ( !files.ContainsKey( filename ) )
+				if ( filesLoaded.Add( filename ) )
 				{
 					try
 					{
-						StarfallData.SFFile file = new StarfallData.SFFile( filename );
+						SFFile file = new SFFile( filename );
 						file.directives.includes.ForEach( ( string n ) => filesToLoad.Push( n ) );
 						file.directives.includedirs.ForEach( ( string n ) => directoriesToLoad.Push( n ) );
-						files[filename] = file;
+						files.Add( file );
+						if( main is null ) main = file;
 					}
 					catch ( Exception e )
 					{
@@ -137,7 +125,7 @@ namespace Starfall
 				}
 
 			}
-			return new StarfallData( files, mainfile );
+			return files;
 		}
 	}
 }

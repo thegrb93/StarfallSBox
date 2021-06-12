@@ -26,28 +26,30 @@ namespace Starfall
 
 	public partial class Instance
 	{
+		public double cpuQuota = 0.005;
+		public double cpuQuotaRatio = 0.01;
+		public bool cpuMonitor = true;
+		public int ramMax = 500000; // 500MB
+
 		public static List<Instance> activeInstances = new List<Instance>();
 		public static Dictionary<Player, List<Instance>> playerInstances = new Dictionary<Player, List<Instance>>();
 
-		StarfallData data;
+		List<SFFile> files;
 		Player player;
 		Entity entity;
 		Lua.lua_State L;
 
-
 		Dictionary<string, List<InstanceHook>> hooks = new Dictionary<string, List<InstanceHook>>();
 		Dictionary<string, List<UserHook>> userhooks = new Dictionary<string, List<UserHook>>();
 
-
-		public Instance( StarfallData data, Player player, Entity entity )
+		public Instance( Player player, Entity entity, List<SFFile> files )
 		{
-			this.data = data;
+			this.files = files;
 			this.player = player;
 			this.entity = entity;
 		}
 
-
-		public void Compile()
+		public void Compile(List<SFFile> files)
 		{
 			L = Lua.lua_open();
 			Lua.lua_gc( L, Lua.LUA_GCSTOP, 0 );
@@ -57,11 +59,21 @@ namespace Starfall
 			Lua.lua_sethook( L, ( Lua.lua_State L, Lua.lua_Debug ar ) => { this.cpuTimeCheck(); }, Lua.LUA_MASKCOUNT, 200 );
 
 			// Compile all the files and store in _G.scripts
-			Lua.lua_createtable( L, 0, data.files.Count );
-			foreach ( KeyValuePair<string, StarfallData.SFFile> file in data.files )
+			Lua.lua_createtable( L, 0, files.Count );
+			foreach ( SFFile file in files )
 			{
-				Lua.lua_pushlstring( L, file.Key, (uint)file.Key.Length );
-				if ( Lua.luaL_loadbuffer( L, file.Value.code, (uint)file.Value.code.Length, "SF: " + file.Key ) != 0 )
+				switch( file.directive.realm )
+				{
+				case "Server":
+					if( !Host.IsServer ) continue;
+					break;
+				case "Client":
+					if( !Host.IsClient ) continue;
+					break;
+				}
+
+				Lua.lua_pushlstring( L, file.filename, (uint)file.filename.Length );
+				if ( Lua.luaL_loadbuffer( L, file.code, (uint)file.code.Length, "SF: " + file.Key ) != 0 )
 				{
 					string err = Lua.lua_tostring( L, -1 ).ToString();
 					Lua.lua_settop( L, 0 ); // Clear the stack
@@ -75,10 +87,19 @@ namespace Starfall
 			Lua.lua_pushcfunction( L, ( Lua.lua_State L ) => { Lua.luaL_getmetatable( L, Lua.luaL_checkstring( L, 1 ) ); return 1; } );
 			Lua.lua_setglobal( L, "getMetatable" );
 
+			SFFile main = files[0];
+			if( Host.IsClient )
+			{
+				if( !main.directives.clientmain.IsNullOrEmpty() )
+				{
+					main = files.Find( (SFFile f) => f.filename == main.directives.clientmain );
+					if( main is null ) throw new StarfallException( "Couldn't load clientmain: " + main.directives.clientmain, "" );
+				}
+			}
 			// Call mainfile
 			Lua.lua_pushcfunction( L, Lua.db_errorfb );
 			Lua.lua_getglobal( L, "require" );
-			Lua.lua_pushlstring( L, data.mainfile, (uint)data.mainfile.Length );
+			Lua.lua_pushlstring( L, main.filename, (uint)main.filename.Length );
 			if ( Lua.lua_pcall( L, 1, 0, -3 ) != 0 )
 			{
 				string err = Lua.lua_tostring( L, -1 ).ToString();
@@ -88,9 +109,34 @@ namespace Starfall
 			Lua.lua_settop( L, 0 ); // Clear the stack
 		}
 
-		private void cpuTimeCheck()
+		public void Error( string message )
 		{
+			
+		}
 
+		Stopwatch cpuTimer = new Stopwatch();
+		double cpuAverage = 0;
+
+		double avgCpu()
+		{
+			return cpuAverage*(1-cpuQuotaRatio) + cpuTimer.Elapsed.TotalSeconds*cpuQuotaRatio;
+		}
+
+		void cpuTimeCheck()
+		{
+			if( avgCpu() > cpuQuota )
+			{
+				Lua.lua_pushliteral( L, "CPU quota exceeded!" );
+				Lua.lua_error( L );
+			}
+		}
+
+		[Event( "tick" )]
+		private void tick()
+		{
+			cpuAverage = avgCpu();
+			cpuTimer.Restart();
+			CallHook("Think")
 		}
 
 		// Registers library in _G
@@ -138,6 +184,20 @@ namespace Starfall
 		public static T GetType<T>( Lua.lua_State L, string name, int index = 1 )
 		{
 			return (T)Lua.luaL_checkudata( L, index, name );
+		}
+
+		public void CallHook(string name)
+		{
+			cpuTimer.Start();
+			Lua.lua_pushcfunction( L, Lua.db_errorfb );
+			Lua.lua_getglobal( L, "callhook" );
+			Lua.lua_pushlstring( L, name, (uint)name.Length );
+			if ( Lua.lua_pcall( L, 1, 0, -3 ) != 0 )
+			{
+				Error( Lua.lua_tostring( L, -1 ).ToString() );
+			}
+			Lua.lua_pop( L, 1 );
+			cpuTimer.Stop();
 		}
 	}
 }
