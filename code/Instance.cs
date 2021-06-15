@@ -73,10 +73,12 @@ namespace Starfall
 						break;
 				}
 
-				Lua.lua_pushlstring( L, file.filename, (uint)file.filename.Length );
-				if ( Lua.luaL_loadbuffer( L, file.code, (uint)file.code.Length, "SF: " + file.filename ) != 0 )
+				Lua.lua_pushstring( L, file.filename );
+				if ( Lua.luaL_loadbuffer( L, file.code, "SF: " + file.filename ) != 0 )
 				{
-					string err = Lua.lua_tostring( L, -1 ).ToString();
+					string err = Lua.lua_tostring( L, -1 );
+					if(err is null)
+						err = "Error not a string";
 					Lua.lua_settop( L, 0 ); // Clear the stack
 
 					throw new StarfallException( err, "" );
@@ -100,10 +102,12 @@ namespace Starfall
 			// Call mainfile
 			Lua.lua_pushcfunction( L, Lua.db_errorfb );
 			Lua.lua_getglobal( L, "require" );
-			Lua.lua_pushlstring( L, main.filename, (uint)main.filename.Length );
+			Lua.lua_pushstring( L, main.filename );
 			if ( Lua.lua_pcall( L, 1, 0, -3 ) != 0 )
 			{
-				string err = Lua.lua_tostring( L, -1 ).ToString();
+				string err = Lua.lua_tostring( L, -1 );
+				if ( err is null )
+					err = "Error not a string";
 				Lua.lua_settop( L, 0 ); // Clear the stack
 				throw new StarfallException( err, "" );
 			}
@@ -127,7 +131,7 @@ namespace Starfall
 		{
 			if ( avgCpu() > cpuQuota )
 			{
-				Lua.lua_pushliteral( L, "CPU quota exceeded!" );
+				Lua.lua_pushstring( L, "CPU quota exceeded!" );
 				Lua.lua_error( L );
 			}
 		}
@@ -192,10 +196,13 @@ namespace Starfall
 			cpuTimer.Start();
 			Lua.lua_pushcfunction( L, Lua.db_errorfb );
 			Lua.lua_getglobal( L, "callhook" );
-			Lua.lua_pushlstring( L, name, (uint)name.Length );
+			Lua.lua_pushstring( L, name );
 			if ( Lua.lua_pcall( L, 1, 0, -3 ) != 0 )
 			{
-				Error( Lua.lua_tostring( L, -1 ).ToString() );
+				string err = Lua.lua_tostring( L, -1 );
+				if ( err is null )
+					err = "Error not a string";
+				Error( err );
 			}
 			Lua.lua_pop( L, 1 );
 			cpuTimer.Stop();

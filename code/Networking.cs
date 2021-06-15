@@ -119,7 +119,10 @@ namespace Starfall
 					string dir = directoriesToLoad.Pop();
 					if ( directoriesLoaded.Add( dir ) )
 					{
-						// For files in dir, add to stack
+						foreach (string f in FileSystem.Mounted.FindFile( dir ))
+						{
+							filesToLoad.Push( f );
+						}
 					}
 				}
 
