@@ -55,9 +55,9 @@ namespace KopiLua
 		/*
 		** functions that read/write blocks when loading/dumping Lua chunks
 		*/
-		public delegate CharPtr lua_Reader( lua_State L, object ud, out uint sz );
+		public delegate string lua_Reader( lua_State L, object ud );
 
-		public delegate int lua_Writer( lua_State L, CharPtr p, uint sz, object ud );
+		public delegate int lua_Writer( lua_State L, string p, uint sz, object ud );
 
 
 		/*
@@ -117,7 +117,7 @@ namespace KopiLua
 			lua_createtable( L, 0, 0 );
 		}
 
-		public static void lua_register( lua_State L, CharPtr n, lua_CFunction f )
+		public static void lua_register( lua_State L, string n, lua_CFunction f )
 		{
 			lua_pushcfunction( L, f );
 			lua_setglobal( L, n );
@@ -173,27 +173,14 @@ namespace KopiLua
 			return lua_type( L, (int)n ) <= 0;
 		}
 
-		public static void lua_pushliteral( lua_State L, CharPtr s )
-		{
-			//TODO: Implement use using lua_pushlstring instead of lua_pushstring
-			//lua_pushlstring(L, "" s, (sizeof(s)/GetUnmanagedSize(typeof(char)))-1)
-			lua_pushstring( L, s );
-		}
-
-		public static void lua_setglobal( lua_State L, CharPtr s )
+		public static void lua_setglobal( lua_State L, string s )
 		{
 			lua_setfield( L, LUA_GLOBALSINDEX, s );
 		}
 
-		public static void lua_getglobal( lua_State L, CharPtr s )
+		public static void lua_getglobal( lua_State L, string s )
 		{
 			lua_getfield( L, LUA_GLOBALSINDEX, s );
-		}
-
-		public static CharPtr lua_tostring( lua_State L, int i )
-		{
-			uint blah;
-			return lua_tolstring( L, i, out blah );
 		}
 
 		////#define lua_open()	luaL_newstate()
@@ -213,9 +200,6 @@ namespace KopiLua
 		{
 			return lua_gc( L, LUA_GCCOUNT, 0 );
 		}
-
-		//#define lua_Chunkreader		lua_Reader
-		//#define lua_Chunkwriter		lua_Writer
 
 
 		/*
@@ -250,15 +234,15 @@ namespace KopiLua
 		public class lua_Debug
 		{
 			public int event_;
-			public CharPtr name;    /* (n) */
-			public CharPtr namewhat;    /* (n) `global', `local', `field', `method' */
-			public CharPtr what;    /* (S) `Lua', `C', `main', `tail' */
-			public CharPtr source;  /* (S) */
+			public string name;    /* (n) */
+			public string namewhat;    /* (n) `global', `local', `field', `method' */
+			public string what;    /* (S) `Lua', `C', `main', `tail' */
+			public string source;  /* (S) */
 			public int currentline; /* (l) */
 			public int nups;        /* (u) number of upvalues */
 			public int linedefined; /* (S) */
 			public int lastlinedefined; /* (S) */
-			public CharPtr short_src = new char[LUA_IDSIZE]; /* (S) */
+			public string short_src; /* (S) */
 			/* private part */
 			public int i_ci;  /* active function */
 		};

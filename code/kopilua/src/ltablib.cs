@@ -159,9 +159,8 @@ namespace KopiLua
 		private static int tconcat( lua_State L )
 		{
 			luaL_Buffer b = new luaL_Buffer();
-			uint lsep;
 			int i, last;
-			CharPtr sep = luaL_optlstring( L, 2, "", out lsep );
+			string sep = luaL_optstring( L, 2, "" );
 			luaL_checktype( L, 1, LUA_TTABLE );
 			i = luaL_optint( L, 3, 1 );
 			last = luaL_opt_integer( L, luaL_checkint, 4, luaL_getn( L, 1 ) );
@@ -169,7 +168,7 @@ namespace KopiLua
 			for ( ; i < last; i++ )
 			{
 				addfield( L, b, i );
-				luaL_addlstring( b, sep, lsep );
+				luaL_addstring( b, sep );
 			}
 			if ( i == last )  /* add last value (if interval was not empty) */
 				addfield( L, b, i );

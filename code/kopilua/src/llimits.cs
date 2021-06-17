@@ -130,17 +130,6 @@ namespace KopiLua
 		public const int LUA_MINBUFFER = 32;
 
 
-#if !lua_lock
-		public static void lua_lock( lua_State L ) { }
-		public static void lua_unlock( lua_State L ) { }
-#endif
-
-
-#if !luai_threadyield
-		public static void luai_threadyield( lua_State L ) { lua_unlock( L ); lua_lock( L ); }
-#endif
-
-
 		/*
 		** macro to control inclusion of some hard tests on stack reallocation
 		*/

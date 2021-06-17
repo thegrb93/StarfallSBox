@@ -40,13 +40,13 @@ namespace KopiLua
 
 		public class luaL_Reg
 		{
-			public luaL_Reg( CharPtr name, lua_CFunction func )
+			public luaL_Reg( string name, lua_CFunction func )
 			{
 				this.name = name;
 				this.func = func;
 			}
 
-			public CharPtr name;
+			public string name;
 			public lua_CFunction func;
 		};
 
@@ -62,20 +62,16 @@ namespace KopiLua
 			if ( !cond )
 				luaL_argerror( L, numarg, extramsg );
 		}
-		public static CharPtr luaL_checkstring( lua_State L, int n ) { return luaL_checklstring( L, n ); }
-		public static CharPtr luaL_optstring( lua_State L, int n, CharPtr d ) { uint len; return luaL_optlstring( L, n, d, out len ); }
 		public static int luaL_checkint( lua_State L, int n ) { return (int)luaL_checkinteger( L, n ); }
 		public static int luaL_optint( lua_State L, int n, lua_Integer d ) { return (int)luaL_optinteger( L, n, d ); }
 		public static long luaL_checklong( lua_State L, int n ) { return luaL_checkinteger( L, n ); }
 		public static long luaL_optlong( lua_State L, int n, lua_Integer d ) { return luaL_optinteger( L, n, d ); }
 
-		public static CharPtr luaL_typename( lua_State L, int i ) { return lua_typename( L, lua_type( L, i ) ); }
+		public static string luaL_typename( lua_State L, int i ) { return lua_typename( L, lua_type( L, i ) ); }
 
-		public static int luaL_dofile( lua_State L, CharPtr fn ) { return luaL_loadfile( L, fn ) != 0 || lua_pcall( L, 0, LUA_MULTRET, 0 ) != 0 ? 1 : 0; }
+		public static int luaL_dostring( lua_State L, string s ) { return luaL_loadstring( L, s ) != 0 || lua_pcall( L, 0, LUA_MULTRET, 0 ) != 0 ? 1 : 0; }
 
-		public static int luaL_dostring( lua_State L, CharPtr s ) { return luaL_loadstring( L, s ) != 0 || lua_pcall( L, 0, LUA_MULTRET, 0 ) != 0 ? 1 : 0; }
-
-		public static void luaL_getmetatable( lua_State L, CharPtr n ) { lua_getfield( L, LUA_REGISTRYINDEX, n ); }
+		public static void luaL_getmetatable( lua_State L, string n ) { lua_getfield( L, LUA_REGISTRYINDEX, n ); }
 
 		public delegate lua_Number luaL_opt_delegate( lua_State L, int narg );
 		public static lua_Number luaL_opt( lua_State L, luaL_opt_delegate f, int n, lua_Number d )
@@ -161,13 +157,13 @@ namespace KopiLua
 		*/
 
 
-		public static int luaL_argerror( lua_State L, int narg, CharPtr extramsg )
+		public static int luaL_argerror( lua_State L, int narg, string extramsg )
 		{
 			lua_Debug ar = new lua_Debug();
 			if ( lua_getstack( L, 0, ar ) == 0 )  /* no stack frame? */
 				return luaL_error( L, "bad argument #%d (%s)", narg, extramsg );
 			lua_getinfo( L, "n", ar );
-			if ( strcmp( ar.namewhat, "method" ) == 0 )
+			if ( ar.namewhat == "method" )
 			{
 				narg--;  /* do not count `self' */
 				if ( narg == 0 )  /* error is in the self argument itself? */
@@ -181,9 +177,9 @@ namespace KopiLua
 		}
 
 
-		public static int luaL_typerror( lua_State L, int narg, CharPtr tname )
+		public static int luaL_typerror( lua_State L, int narg, string tname )
 		{
-			CharPtr msg = lua_pushfstring( L, "%s expected, got %s",
+			string msg = lua_pushfstring( L, "%s expected, got %s",
 											  tname, luaL_typename( L, narg ) );
 			return luaL_argerror( L, narg, msg );
 		}
@@ -207,10 +203,10 @@ namespace KopiLua
 					return;
 				}
 			}
-			lua_pushliteral( L, "" );  /* else, no information available... */
+			lua_pushstring( L, "" );  /* else, no information available... */
 		}
 
-		public static int luaL_error( lua_State L, CharPtr fmt, params object[] p )
+		public static int luaL_error( lua_State L, string fmt, params object[] p )
 		{
 			luaL_where( L, 1 );
 			lua_pushvfstring( L, fmt, p );
@@ -222,21 +218,18 @@ namespace KopiLua
 		/* }====================================================== */
 
 
-		public static int luaL_checkoption( lua_State L, int narg, CharPtr def,
-										 CharPtr[] lst )
+		public static int luaL_checkoption( lua_State L, int narg, string def, string[] lst )
 		{
-			CharPtr name = (def != null) ? luaL_optstring( L, narg, def ) :
-									   luaL_checkstring( L, narg );
+			string name = !string.IsNullOrEmpty( def ) ? luaL_optstring( L, narg, def ) : luaL_checkstring( L, narg );
 			int i;
 			for ( i = 0; i < lst.Length; i++ )
-				if ( strcmp( lst[i], name ) == 0 )
+				if ( lst[i] == name )
 					return i;
-			return luaL_argerror( L, narg,
-								 lua_pushfstring( L, "invalid option " + LUA_QS, name ) );
+			return luaL_argerror( L, narg, lua_pushfstring( L, "invalid option " + LUA_QS, name ) );
 		}
 
 
-		public static int luaL_newmetatable( lua_State L, CharPtr tname )
+		public static int luaL_newmetatable( lua_State L, string tname )
 		{
 			lua_getfield( L, LUA_REGISTRYINDEX, tname );  /* get registry.name */
 			if ( !lua_isnil( L, -1 ) )  /* name already in use? */
@@ -249,7 +242,7 @@ namespace KopiLua
 		}
 
 
-		public static object luaL_checkudata( lua_State L, int ud, CharPtr tname )
+		public static object luaL_checkudata( lua_State L, int ud, string tname )
 		{
 			object p = lua_touserdata( L, ud );
 			if ( p != null )
@@ -269,7 +262,7 @@ namespace KopiLua
 		}
 
 
-		public static void luaL_checkstack( lua_State L, int space, CharPtr mes )
+		public static void luaL_checkstack( lua_State L, int space, string mes )
 		{
 			if ( lua_checkstack( L, space ) == 0 )
 				luaL_error( L, "stack overflow (%s)", mes );
@@ -290,27 +283,21 @@ namespace KopiLua
 		}
 
 
-		public static CharPtr luaL_checklstring( lua_State L, int narg ) { uint len; return luaL_checklstring( L, narg, out len ); }
-		public static CharPtr luaL_checklstring( lua_State L, int narg, out uint len )
+		public static string luaL_checkstring( lua_State L, int narg )
 		{
-			CharPtr s = lua_tolstring( L, narg, out len );
-			if ( s == null ) tag_error( L, narg, LUA_TSTRING );
-			return s;
+			string str = lua_tostring( L, narg );
+			if ( str is null ) tag_error( L, narg, LUA_TSTRING );
+			return str;
 		}
 
 
-		public static CharPtr luaL_optlstring( lua_State L, int narg, CharPtr def )
-		{
-			uint len; return luaL_optlstring( L, narg, def, out len );
-		}
-		public static CharPtr luaL_optlstring( lua_State L, int narg, CharPtr def, out uint len )
+		public static string luaL_optstring( lua_State L, int narg, string def )
 		{
 			if ( lua_isnoneornil( L, narg ) )
 			{
-				len = (uint)((def != null) ? strlen( def ) : 0);
 				return def;
 			}
-			else return luaL_checklstring( L, narg, out len );
+			else return luaL_checkstring( L, narg );
 		}
 
 
@@ -344,7 +331,7 @@ namespace KopiLua
 		}
 
 
-		public static int luaL_getmetafield( lua_State L, int obj, CharPtr event_ )
+		public static int luaL_getmetafield( lua_State L, int obj, string event_ )
 		{
 			if ( lua_getmetatable( L, obj ) == 0 )  /* no metatable? */
 				return 0;
@@ -363,7 +350,7 @@ namespace KopiLua
 		}
 
 
-		public static int luaL_callmeta( lua_State L, int obj, CharPtr event_ )
+		public static int luaL_callmeta( lua_State L, int obj, string event_ )
 		{
 			obj = abs_index( L, obj );
 			if ( luaL_getmetafield( L, obj, event_ ) == 0 )  /* no metafield? */
@@ -374,8 +361,7 @@ namespace KopiLua
 		}
 
 
-		public static void luaL_register( lua_State L, CharPtr libname,
-										luaL_Reg[] l )
+		public static void luaL_register( lua_State L, string libname, luaL_Reg[] l )
 		{
 			luaI_openlib( L, libname, l, 0 );
 		}
@@ -389,8 +375,7 @@ namespace KopiLua
 			return size;
 		}
 
-		public static void luaI_openlib( lua_State L, CharPtr libname,
-									  luaL_Reg[] l, int nup )
+		public static void luaI_openlib( lua_State L, string libname, luaL_Reg[] l, int nup )
 		{
 			if ( libname != null )
 			{
@@ -446,7 +431,7 @@ namespace KopiLua
 			lua_newtable(L);  /* create it */
 			lua_pushvalue(L, -1);  /* `size' will be its own metatable */
 			lua_setmetatable(L, -2);
-			lua_pushliteral(L, "kv");
+			lua_pushstring(L, "kv");
 			lua_setfield(L, -2, "__mode");  /* metatable(N).__mode = "kv" */
 			lua_pushvalue(L, -1);
 			lua_setfield(L, LUA_REGISTRYINDEX, "LUA_SIZES");  /* store in register */
@@ -456,10 +441,10 @@ namespace KopiLua
 
 		public static void luaL_setn (lua_State L, int t, int n) {
 		  t = abs_index(L, t);
-		  lua_pushliteral(L, "n");
+		  lua_pushstring(L, "n");
 		  lua_rawget(L, t);
 		  if (checkint(L, 1) >= 0) {  /* is there a numeric field `n'? */
-			lua_pushliteral(L, "n");  /* use it */
+			lua_pushstring(L, "n");  /* use it */
 			lua_pushinteger(L, n);
 			lua_rawset(L, t);
 		  }
@@ -476,7 +461,7 @@ namespace KopiLua
 		public static int luaL_getn (lua_State L, int t) {
 		  int n;
 		  t = abs_index(L, t);
-		  lua_pushliteral(L, "n");  /* try t.n */
+		  lua_pushstring(L, "n");  /* try t.n */
 		  lua_rawget(L, t);
 		  if ((n = checkint(L, 1)) >= 0) return n;
 		  getsizes(L);  /* else try sizes[t] */
@@ -492,18 +477,17 @@ namespace KopiLua
 
 
 
-		public static CharPtr luaL_gsub( lua_State L, CharPtr s, CharPtr p,
-																	   CharPtr r )
+		public static string luaL_gsub( lua_State L, string s, string p, string r )
 		{
-			CharPtr wild;
-			uint l = (uint)strlen( p );
+			int wild = 0;
+			int sindex = 0;
 			luaL_Buffer b = new luaL_Buffer();
 			luaL_buffinit( L, b );
-			while ( (wild = strstr( s, p )) != null )
+			while ( (wild = s.IndexOf( p, sindex )) > 0 )
 			{
-				luaL_addlstring( b, s, (uint)(wild - s) );  /* push prefix */
+				luaL_addstring( b, s.Substring( sindex, wild - sindex ) );  /* push prefix */
 				luaL_addstring( b, r );  /* push replacement in place of pattern */
-				s = wild + l;  /* continue after `p' */
+				sindex = wild + p.Length;  /* continue after `p' */
 			}
 			luaL_addstring( b, s );  /* push last suffix */
 			luaL_pushresult( b );
@@ -511,22 +495,21 @@ namespace KopiLua
 		}
 
 
-		public static CharPtr luaL_findtable( lua_State L, int idx,
-											   CharPtr fname, int szhint )
+		public static string luaL_findtable( lua_State L, int idx, string fname, int szhint )
 		{
-			CharPtr e;
+			int e = 0;
 			lua_pushvalue( L, idx );
-			do
+			while ( true )
 			{
-				e = strchr( fname, '.' );
-				if ( e == null ) e = fname + strlen( fname );
-				lua_pushlstring( L, fname, (uint)(e - fname) );
+				e = fname.IndexOf( '.' );
+				if ( e == -1 ) e = fname.Length;
+				lua_pushstring( L, fname.Substring( 0, e ) );
 				lua_rawget( L, -2 );
 				if ( lua_isnil( L, -1 ) )
 				{  /* no such field? */
 					lua_pop( L, 1 );  /* remove this nil */
 					lua_createtable( L, 0, (e == '.' ? 1 : szhint) ); /* new table for field */
-					lua_pushlstring( L, fname, (uint)(e - fname) );
+					lua_pushstring( L, fname.Substring( 0, e ) );
 					lua_pushvalue( L, -2 );
 					lua_settable( L, -4 );  /* set new table into field */
 				}
@@ -536,8 +519,11 @@ namespace KopiLua
 					return fname;  /* return problematic part of the name */
 				}
 				lua_remove( L, -2 );  /* remove previous table */
-				fname = e + 1;
-			} while ( e == '.' );
+				if ( e < fname.Length )
+					fname = fname.Substring( e );
+				else
+					break;
+			}
 			return null;
 		}
 
@@ -562,7 +548,7 @@ namespace KopiLua
 			if ( l == 0 ) return 0;  /* put nothing on stack */
 			else
 			{
-				lua_pushlstring( B.L, B.buffer, l );
+				lua_pushstring( B.L, new string( B.buffer.chars, 0, (int)l ) );
 				B.p = 0;
 				B.lvl++;
 				return 1;
@@ -601,20 +587,12 @@ namespace KopiLua
 		}
 
 
-		public static void luaL_addlstring( luaL_Buffer B, CharPtr s, uint l )
+		public static void luaL_addstring( luaL_Buffer B, string s )
 		{
-			while ( l-- != 0 )
+			foreach ( char c in s )
 			{
-				char c = s[0];
-				s = s.next();
 				luaL_addchar( B, c );
 			}
-		}
-
-
-		public static void luaL_addstring( luaL_Buffer B, CharPtr s )
-		{
-			luaL_addlstring( B, s, (uint)strlen( s ) );
 		}
 
 
@@ -629,15 +607,13 @@ namespace KopiLua
 		public static void luaL_addvalue( luaL_Buffer B )
 		{
 			lua_State L = B.L;
-			uint vl;
-			CharPtr s = lua_tolstring( L, -1, out vl );
+			string str = lua_tostring( L, -1 );
+			if ( str is null ) str = "";
+			int vl = str.Length;
 			if ( vl <= bufffree( B ) )
-			{  /* fit into buffer? */
-				CharPtr dst = new CharPtr( B.buffer.chars, B.buffer.index + B.p );
-				CharPtr src = new CharPtr( s.chars, s.index );
-				for ( uint i = 0; i < vl; i++ )
-					dst[i] = src[i];
-				B.p += (int)vl;
+			{
+				str.CopyTo( 0, B.buffer.chars, B.buffer.index + B.p, vl );
+				B.p += vl;
 				lua_pop( L, 1 );  /* remove from stack */
 			}
 			else
@@ -707,119 +683,31 @@ namespace KopiLua
 		** =======================================================
 		*/
 
-		public class LoadF
+		private static int errfile( lua_State L, string what, int fnameindex )
 		{
-			public int extraline;
-			public Stream f;
-			public CharPtr buff = new char[LUAL_BUFFERSIZE];
-		};
-
-
-		public static CharPtr getF( lua_State L, object ud, out uint size )
-		{
-			size = 0;
-			LoadF lf = (LoadF)ud;
-			//(void)L;
-			if ( lf.extraline != 0 )
-			{
-				lf.extraline = 0;
-				size = 1;
-				return "\n";
-			}
-			if ( feof( lf.f ) != 0 ) return null;
-			size = (uint)fread( lf.buff, 1, lf.buff.chars.Length, lf.f );
-			return (size > 0) ? new CharPtr( lf.buff ) : null;
-		}
-
-
-		private static int errfile( lua_State L, CharPtr what, int fnameindex )
-		{
-			CharPtr serr = strerror( errno() );
-			CharPtr filename = lua_tostring( L, fnameindex ) + 1;
+			string serr = strerror( errno() );
+			string filename = lua_tostring( L, fnameindex );
 			lua_pushfstring( L, "cannot %s %s: %s", what, filename, serr );
 			lua_remove( L, fnameindex );
 			return LUA_ERRFILE;
 		}
 
 
-		public static int luaL_loadfile( lua_State L, CharPtr filename )
+		static string getS( lua_State L, object ud )
 		{
-			LoadF lf = new LoadF();
-			int status, readstatus;
-			int c;
-			int fnameindex = lua_gettop( L ) + 1;  /* index of filename on the stack */
-			lf.extraline = 0;
-			if ( filename == null )
-			{
-				lua_pushliteral( L, "=stdin" );
-				lf.f = stdin;
-			}
-			else
-			{
-				lua_pushfstring( L, "@%s", filename );
-				lf.f = fopen( filename, "r" );
-				if ( lf.f == null ) return errfile( L, "open", fnameindex );
-			}
-			c = getc( lf.f );
-			if ( c == '#' )
-			{  /* Unix exec. file? */
-				lf.extraline = 1;
-				while ( (c = getc( lf.f )) != EOF && c != '\n' ) ;  /* skip first line */
-				if ( c == '\n' ) c = getc( lf.f );
-			}
-			if ( c == LUA_SIGNATURE[0] && (filename != null) )
-			{  /* binary file? */
-				lf.f = freopen( filename, "rb", lf.f );  /* reopen in binary mode */
-				if ( lf.f == null ) return errfile( L, "reopen", fnameindex );
-				/* skip eventual `#!...' */
-				while ( (c = getc( lf.f )) != EOF && c != LUA_SIGNATURE[0] ) ;
-				lf.extraline = 0;
-			}
-			ungetc( c, lf.f );
-			status = lua_load( L, getF, lf, lua_tostring( L, -1 ) );
-			readstatus = ferror( lf.f );
-			if ( filename != null ) fclose( lf.f );  /* close file (even in case of errors) */
-			if ( readstatus != 0 )
-			{
-				lua_settop( L, fnameindex );  /* ignore results from `lua_load' */
-				return errfile( L, "read", fnameindex );
-			}
-			lua_remove( L, fnameindex );
-			return status;
+			return (string)ud;
 		}
 
 
-		public class LoadS
+		public static int luaL_loadbuffer( lua_State L, string buff, string name )
 		{
-			public CharPtr s;
-			public uint size;
-		};
-
-
-		static CharPtr getS( lua_State L, object ud, out uint size )
-		{
-			LoadS ls = (LoadS)ud;
-			//(void)L;
-			//if (ls.size == 0) return null;
-			size = ls.size;
-			ls.size = 0;
-			return ls.s;
+			return lua_load( L, getS, buff, name );
 		}
 
 
-		public static int luaL_loadbuffer( lua_State L, CharPtr buff, uint size,
-										CharPtr name )
+		public static int luaL_loadstring( lua_State L, string s )
 		{
-			LoadS ls = new LoadS();
-			ls.s = new CharPtr( buff );
-			ls.size = size;
-			return lua_load( L, getS, ls, name );
-		}
-
-
-		public static int luaL_loadstring( lua_State L, CharPtr s )
-		{
-			return luaL_loadbuffer( L, s, (uint)strlen( s ), s );
+			return luaL_loadbuffer( L, s, s );
 		}
 
 
@@ -835,9 +723,8 @@ namespace KopiLua
 
 		private static int panic( lua_State L )
 		{
-			//(void)L;  /* to avoid warnings */
-			fprintf( stderr, "PANIC: unprotected error in call to Lua API (%s)\n",
-							 lua_tostring( L, -1 ) );
+			string str = lua_tostring( L, -1 );
+			Sandbox.Log.Error( "PANIC: unprotected error in call to Lua API (" + str + ")" );
 			return 0;
 		}
 

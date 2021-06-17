@@ -123,7 +123,7 @@ namespace KopiLua
 			int i;
 			for ( i = 0; i < NUM_RESERVED; i++ )
 			{
-				TString ts = luaS_new( L, luaX_tokens[i] );
+				TString ts = luaS_newstr( L, luaX_tokens[i] );
 				luaS_fix( ts );  /* reserved words are never collected */
 				lua_assert( luaX_tokens[i].Length + 1 <= TOKEN_LEN );
 				ts.tsv.reserved = cast_byte( i + 1 );  /* reserved word */
@@ -134,7 +134,7 @@ namespace KopiLua
 		public const int MAXSRC = 80;
 
 
-		public static CharPtr luaX_token2str( LexState ls, int token )
+		public static string luaX_token2str( LexState ls, int token )
 		{
 			if ( token < FIRST_RESERVED )
 			{
@@ -147,7 +147,7 @@ namespace KopiLua
 		}
 
 
-		public static CharPtr txtToken( LexState ls, int token )
+		public static string txtToken( LexState ls, int token )
 		{
 			switch ( token )
 			{
@@ -155,31 +155,30 @@ namespace KopiLua
 				case (int)RESERVED.TK_STRING:
 				case (int)RESERVED.TK_NUMBER:
 					save( ls, '\0' );
-					return luaZ_buffer( ls.buff );
+					return luaZ_buffer( ls.buff ).ToString();
 				default:
 					return luaX_token2str( ls, token );
 			}
 		}
 
-		public static void luaX_lexerror( LexState ls, CharPtr msg, int token )
+		public static void luaX_lexerror( LexState ls, string msg, int token )
 		{
-			CharPtr buff = new char[MAXSRC];
-			luaO_chunkid( buff, getstr( ls.source ), MAXSRC );
+			string buff = luaO_chunkid( getstr( ls.source ), MAXSRC );
 			msg = luaO_pushfstring( ls.L, "%s:%d: %s", buff, ls.linenumber, msg );
 			if ( token != 0 )
 				luaO_pushfstring( ls.L, "%s near " + LUA_QS, msg, txtToken( ls, token ) );
 			luaD_throw( ls.L, LUA_ERRSYNTAX );
 		}
 
-		public static void luaX_syntaxerror( LexState ls, CharPtr msg )
+		public static void luaX_syntaxerror( LexState ls, string msg )
 		{
 			luaX_lexerror( ls, msg, ls.t.token );
 		}
 
-		public static TString luaX_newstring( LexState ls, CharPtr str, uint l )
+		public static TString luaX_newstring( LexState ls, string str )
 		{
 			lua_State L = ls.L;
-			TString ts = luaS_newlstr( L, str, l );
+			TString ts = luaS_newstr( L, str );
 			TValue o = luaH_setstr( L, ls.fs.h, ts );  /* entry for `str' */
 			if ( ttisnil( o ) )
 			{
@@ -226,9 +225,9 @@ namespace KopiLua
          */
 
 
-		private static int check_next( LexState ls, CharPtr set )
+		private static int check_next( LexState ls, string set )
 		{
-			if ( strchr( set, (char)ls.current ) == null )
+			if ( set.IndexOf( (char)ls.current ) != -1 )
 				return 0;
 			save_and_next( ls );
 			return 1;
@@ -252,7 +251,7 @@ namespace KopiLua
 			char old = ls.decpoint;
 			ls.decpoint = '.'; // (cv ? cv.decimal_point[0] : '.');
 			buffreplace( ls, old, ls.decpoint );  /* try updated decimal separator */
-			if ( luaO_str2d( luaZ_buffer( ls.buff ), out seminfo.r ) == 0 )
+			if ( luaO_str2d( luaZ_buffer( ls.buff ).ToString(), out seminfo.r ) == 0 )
 			{
 				/* format error with correct decimal point: no more options */
 				buffreplace( ls, ls.decpoint, '.' );  /* undo change (for error message) */
@@ -275,7 +274,7 @@ namespace KopiLua
 				save_and_next( ls );
 			save( ls, '\0' );
 			buffreplace( ls, '.', ls.decpoint );  /* follow locale for decimal point */
-			if ( luaO_str2d( luaZ_buffer( ls.buff ), out seminfo.r ) == 0 )  /* format error? */
+			if ( luaO_str2d( luaZ_buffer( ls.buff ).ToString(), out seminfo.r ) == 0 )  /* format error? */
 				trydecpoint( ls, seminfo ); /* try to update decimal point separator */
 		}
 
@@ -351,8 +350,7 @@ namespace KopiLua
 			endloop:
 			if ( seminfo != null )
 			{
-				seminfo.ts = luaX_newstring( ls, luaZ_buffer( ls.buff ) + (2 + sep),
-											(uint)(luaZ_bufflen( ls.buff ) - 2 * (2 + sep)) );
+				seminfo.ts = luaX_newstring( ls, new string( luaZ_buffer( ls.buff ).chars, 2 + sep, (int)(luaZ_bufflen( ls.buff ) - 2 * (2 + sep)) ) );
 			}
 		}
 
@@ -417,8 +415,7 @@ namespace KopiLua
 				}
 			}
 			save_and_next( ls );  /* skip delimiter */
-			seminfo.ts = luaX_newstring( ls, luaZ_buffer( ls.buff ) + 1,
-										luaZ_bufflen( ls.buff ) - 2 );
+			seminfo.ts = luaX_newstring( ls, new string( luaZ_buffer( ls.buff ).chars, 1, (int)(luaZ_bufflen( ls.buff ) - 2) ) );
 		}
 
 
@@ -540,8 +537,7 @@ namespace KopiLua
 								{
 									save_and_next( ls );
 								} while ( isalnum( ls.current ) || ls.current == '_' );
-								ts = luaX_newstring( ls, luaZ_buffer( ls.buff ),
-													luaZ_bufflen( ls.buff ) );
+								ts = luaX_newstring( ls, new string( luaZ_buffer( ls.buff ).chars, 0, (int)luaZ_bufflen( ls.buff ) ) );
 								if ( ts.tsv.reserved > 0 )  /* reserved word? */
 									return ts.tsv.reserved - 1 + FIRST_RESERVED;
 								else

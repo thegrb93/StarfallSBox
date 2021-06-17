@@ -60,14 +60,14 @@ namespace KopiLua
 		}
 
 
-		private static void settabss( lua_State L, CharPtr i, CharPtr v )
+		private static void settabss( lua_State L, string i, string v )
 		{
 			lua_pushstring( L, v );
 			lua_setfield( L, -2, i );
 		}
 
 
-		private static void settabsi( lua_State L, CharPtr i, int v )
+		private static void settabsi( lua_State L, string i, int v )
 		{
 			lua_pushinteger( L, v );
 			lua_setfield( L, -2, i );
@@ -89,7 +89,7 @@ namespace KopiLua
 		}
 
 
-		private static void treatstackoption( lua_State L, lua_State L1, CharPtr fname )
+		private static void treatstackoption( lua_State L, lua_State L1, string fname )
 		{
 			if ( L == L1 )
 			{
@@ -107,7 +107,7 @@ namespace KopiLua
 			lua_Debug ar = new lua_Debug();
 			int arg;
 			lua_State L1 = getthread( L, out arg );
-			CharPtr options = luaL_optstring( L, arg + 2, "flnSu" );
+			string options = luaL_optstring( L, arg + 2, "flnSu" );
 			if ( lua_isnumber( L, arg + 1 ) != 0 )
 			{
 				if ( lua_getstack( L1, (int)lua_tointeger( L, arg + 1 ), ar ) == 0 )
@@ -128,7 +128,7 @@ namespace KopiLua
 			if ( lua_getinfo( L1, options, ar ) == 0 )
 				return luaL_argerror( L, arg + 2, "invalid option" );
 			lua_createtable( L, 0, 2 );
-			if ( strchr( options, 'S' ) != null )
+			if ( options.IndexOf( 'S' ) > -1 )
 			{
 				settabss( L, "source", ar.source );
 				settabss( L, "short_src", ar.short_src );
@@ -136,18 +136,18 @@ namespace KopiLua
 				settabsi( L, "lastlinedefined", ar.lastlinedefined );
 				settabss( L, "what", ar.what );
 			}
-			if ( strchr( options, 'l' ) != null )
+			if ( options.IndexOf( 'l' ) > -1 )
 				settabsi( L, "currentline", ar.currentline );
-			if ( strchr( options, 'u' ) != null )
+			if ( options.IndexOf( 'u' ) > -1 )
 				settabsi( L, "nups", ar.nups );
-			if ( strchr( options, 'n' ) != null )
+			if ( options.IndexOf( 'n' ) > -1 )
 			{
 				settabss( L, "name", ar.name );
 				settabss( L, "namewhat", ar.namewhat );
 			}
-			if ( strchr( options, 'L' ) != null )
+			if ( options.IndexOf( 'L' ) > -1 )
 				treatstackoption( L, L1, "activelines" );
-			if ( strchr( options, 'f' ) != null )
+			if ( options.IndexOf( 'f' ) > -1 )
 				treatstackoption( L, L1, "func" );
 			return 1;  /* return table */
 		}
@@ -158,7 +158,7 @@ namespace KopiLua
 			int arg;
 			lua_State L1 = getthread( L, out arg );
 			lua_Debug ar = new lua_Debug();
-			CharPtr name;
+			string name;
 			if ( lua_getstack( L1, luaL_checkint( L, arg + 1 ), ar ) == 0 )  /* out of range? */
 				return luaL_argerror( L, arg + 1, "level out of range" );
 			name = lua_getlocal( L1, ar, luaL_checkint( L, arg + 2 ) );
@@ -194,7 +194,7 @@ namespace KopiLua
 
 		private static int auxupvalue( lua_State L, int get )
 		{
-			CharPtr name;
+			string name;
 			int n = luaL_checkint( L, 2 );
 			luaL_checktype( L, 1, LUA_TFUNCTION );
 			if ( lua_iscfunction( L, 1 ) ) return 0;  /* cannot touch C upvalues from Lua */
@@ -244,24 +244,23 @@ namespace KopiLua
 		}
 
 
-		private static int makemask( CharPtr smask, int count )
+		private static int makemask( string smask, int count )
 		{
 			int mask = 0;
-			if ( strchr( smask, 'c' ) != null ) mask |= LUA_MASKCALL;
-			if ( strchr( smask, 'r' ) != null ) mask |= LUA_MASKRET;
-			if ( strchr( smask, 'l' ) != null ) mask |= LUA_MASKLINE;
+			if ( smask.Contains( 'c' ) ) mask |= LUA_MASKCALL;
+			if ( smask.Contains( 'r' ) ) mask |= LUA_MASKRET;
+			if ( smask.Contains( 'l' ) ) mask |= LUA_MASKLINE;
 			if ( count > 0 ) mask |= LUA_MASKCOUNT;
 			return mask;
 		}
 
 
-		private static CharPtr unmakemask( int mask, CharPtr smask )
+		private static string unmakemask( int mask )
 		{
-			int i = 0;
-			if ( (mask & LUA_MASKCALL) != 0 ) smask[i++] = 'c';
-			if ( (mask & LUA_MASKRET) != 0 ) smask[i++] = 'r';
-			if ( (mask & LUA_MASKLINE) != 0 ) smask[i++] = 'l';
-			smask[i] = '\0';
+			string smask = "";
+			if ( (mask & LUA_MASKCALL) != 0 ) smask += 'c';
+			if ( (mask & LUA_MASKRET) != 0 ) smask += 'r';
+			if ( (mask & LUA_MASKLINE) != 0 ) smask += 'l';
 			return smask;
 		}
 
@@ -293,7 +292,7 @@ namespace KopiLua
 			}
 			else
 			{
-				CharPtr smask = luaL_checkstring( L, arg + 2 );
+				string smask = luaL_checkstring( L, arg + 2 );
 				luaL_checktype( L, arg + 1, LUA_TFUNCTION );
 				count = luaL_optint( L, arg + 3, 0 );
 				func = hookf; mask = makemask( smask, count );
@@ -312,11 +311,10 @@ namespace KopiLua
 		{
 			int arg;
 			lua_State L1 = getthread( L, out arg );
-			CharPtr buff = new char[5];
 			int mask = lua_gethookmask( L1 );
 			lua_Hook hook = lua_gethook( L1 );
 			if ( hook != null && hook != hookf )  /* external hook? */
-				lua_pushliteral( L, "external hook" );
+				lua_pushstring( L, "external hook" );
 			else
 			{
 				gethooktable( L );
@@ -324,7 +322,7 @@ namespace KopiLua
 				lua_rawget( L, -2 );   /* get hook */
 				lua_remove( L, -2 );  /* remove hook table */
 			}
-			lua_pushstring( L, unmakemask( mask, buff ) );
+			lua_pushstring( L, unmakemask( mask ) );
 			lua_pushinteger( L, lua_gethookcount( L1 ) );
 			return 3;
 		}
@@ -354,10 +352,10 @@ namespace KopiLua
 			else
 				level = (L == L1) ? 1 : 0;  /* level 0 may be this own function */
 			if ( lua_gettop( L ) == arg )
-				lua_pushliteral( L, "" );
+				lua_pushstring( L, "" );
 			else if ( lua_isstring( L, arg + 1 ) == 0 ) return 1;  /* message is not a string */
-			else lua_pushliteral( L, "\n" );
-			lua_pushliteral( L, "stack traceback:" );
+			else lua_pushstring( L, "\n" );
+			lua_pushstring( L, "stack traceback:" );
 			while ( lua_getstack( L1, level++, ar ) != 0 )
 			{
 				if ( level > LEVELS1 && firstpart )
@@ -367,26 +365,26 @@ namespace KopiLua
 						level--;  /* keep going */
 					else
 					{
-						lua_pushliteral( L, "\n\t..." );  /* too many levels */
+						lua_pushstring( L, "\n\t..." );  /* too many levels */
 						while ( lua_getstack( L1, level + LEVELS2, ar ) != 0 )  /* find last levels */
 							level++;
 					}
 					firstpart = false;
 					continue;
 				}
-				lua_pushliteral( L, "\n\t" );
+				lua_pushstring( L, "\n\t" );
 				lua_getinfo( L1, "Snl", ar );
 				lua_pushfstring( L, "%s:", ar.short_src );
 				if ( ar.currentline > 0 )
 					lua_pushfstring( L, "%d:", ar.currentline );
-				if ( ar.namewhat != '\0' )  /* is there a name? */
+				if ( !string.IsNullOrEmpty( ar.namewhat ) )  /* is there a name? */
 					lua_pushfstring( L, " in function " + LUA_QS, ar.name );
 				else
 				{
-					if ( ar.what == 'm' )  /* main? */
+					if ( ar.what == "m" )  /* main? */
 						lua_pushfstring( L, " in main chunk" );
-					else if ( ar.what == 'C' || ar.what == 't' )
-						lua_pushliteral( L, " ?" );  /* C function or tail call */
+					else if ( ar.what == "C" || ar.what == "t" )
+						lua_pushstring( L, " ?" );  /* C function or tail call */
 					else
 						lua_pushfstring( L, " in function <%s:%d>",
 										ar.short_src, ar.linedefined );

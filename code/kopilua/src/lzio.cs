@@ -77,14 +77,10 @@ namespace KopiLua
 
 		public static int luaZ_fill( ZIO z )
 		{
-			uint size;
 			lua_State L = z.L;
-			CharPtr buff;
-			lua_unlock( L );
-			buff = z.reader( L, z.data, out size );
-			lua_lock( L );
-			if ( buff == null || size == 0 ) return EOZ;
-			z.n = size - 1;
+			string buff = z.reader( L, z.data );
+			if ( string.IsNullOrEmpty( buff ) ) return EOZ;
+			z.n = (uint)buff.Length;
 			z.p = new CharPtr( buff );
 			int result = char2int( z.p[0] );
 			z.p.inc();
@@ -115,26 +111,6 @@ namespace KopiLua
 			z.data = data;
 			z.n = 0;
 			z.p = null;
-		}
-
-
-		/* --------------------------------------------------------------- read --- */
-		public static uint luaZ_read( ZIO z, CharPtr b, uint n )
-		{
-			b = new CharPtr( b );
-			while ( n != 0 )
-			{
-				uint m;
-				if ( luaZ_lookahead( z ) == EOZ )
-					return n;  // return number of missing bytes
-				m = (n <= z.n) ? n : z.n;  // min. between n and z.n
-				memcpy( b, z.p, m );
-				z.n -= m;
-				z.p += m;
-				b = b + m;
-				n -= m;
-			}
-			return 0;
 		}
 
 		/* ------------------------------------------------------------------------ */

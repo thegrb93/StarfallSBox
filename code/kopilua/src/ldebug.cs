@@ -86,7 +86,6 @@ namespace KopiLua
 		{
 			int status;
 			CallInfo ci;
-			lua_lock( L );
 			for ( ci = L.ci; level > 0 && ci > L.base_ci[0]; CallInfo.dec( ref ci ) )
 			{
 				level--;
@@ -104,7 +103,6 @@ namespace KopiLua
 				ar.i_ci = 0;
 			}
 			else status = 0;  /* no such level */
-			lua_unlock( L );
 			return status;
 		}
 
@@ -115,9 +113,9 @@ namespace KopiLua
 		}
 
 
-		private static CharPtr findlocal( lua_State L, CallInfo ci, int n )
+		private static string findlocal( lua_State L, CallInfo ci, int n )
 		{
-			CharPtr name;
+			string name;
 			Proto fp = getluaproto( ci );
 			if ( (fp != null) && (name = luaF_getlocalname( fp, n, currentpc( L, ci ) )) != null )
 				return name;  /* is a local variable in a Lua function */
@@ -132,27 +130,23 @@ namespace KopiLua
 		}
 
 
-		public static CharPtr lua_getlocal( lua_State L, lua_Debug ar, int n )
+		public static string lua_getlocal( lua_State L, lua_Debug ar, int n )
 		{
 			CallInfo ci = L.base_ci[ar.i_ci];
-			CharPtr name = findlocal( L, ci, n );
-			lua_lock( L );
+			string name = findlocal( L, ci, n );
 			if ( name != null )
 				luaA_pushobject( L, ci.base_[n - 1] );
-			lua_unlock( L );
 			return name;
 		}
 
 
-		public static CharPtr lua_setlocal( lua_State L, lua_Debug ar, int n )
+		public static string lua_setlocal( lua_State L, lua_Debug ar, int n )
 		{
 			CallInfo ci = L.base_ci[ar.i_ci];
-			CharPtr name = findlocal( L, ci, n );
-			lua_lock( L );
+			string name = findlocal( L, ci, n );
 			if ( name != null )
 				setobjs2s( L, ci.base_[n - 1], L.top - 1 );
 			StkId.dec( ref L.top );  /* pop value */
-			lua_unlock( L );
 			return name;
 		}
 
@@ -173,7 +167,7 @@ namespace KopiLua
 				ar.lastlinedefined = cl.l.p.lastlinedefined;
 				ar.what = (ar.linedefined == 0) ? "main" : "Lua";
 			}
-			luaO_chunkid( ar.short_src, ar.source, LUA_IDSIZE );
+			ar.short_src = luaO_chunkid( ar.source, LUA_IDSIZE );
 		}
 
 
@@ -183,7 +177,7 @@ namespace KopiLua
 			ar.what = "tail";
 			ar.lastlinedefined = ar.linedefined = ar.currentline = -1;
 			ar.source = "=(tail call)";
-			luaO_chunkid( ar.short_src, ar.source, LUA_IDSIZE );
+			ar.short_src = luaO_chunkid( ar.source, LUA_IDSIZE );
 			ar.nups = 0;
 		}
 
@@ -207,7 +201,7 @@ namespace KopiLua
 		}
 
 
-		private static int auxgetinfo( lua_State L, CharPtr what, lua_Debug ar,
+		private static int auxgetinfo( lua_State L, string what, lua_Debug ar,
 							Closure f, CallInfo ci )
 		{
 			int status = 1;
@@ -216,9 +210,9 @@ namespace KopiLua
 				info_tailcall( ar );
 				return status;
 			}
-			for ( ; what[0] != 0; what = what.next() )
+			for (int i = 0; i < what.Length; ++i )
 			{
-				switch ( what[0] )
+				switch ( what[i] )
 				{
 					case 'S':
 						{
@@ -255,17 +249,16 @@ namespace KopiLua
 		}
 
 
-		public static int lua_getinfo( lua_State L, CharPtr what, lua_Debug ar )
+		public static int lua_getinfo( lua_State L, string what, lua_Debug ar )
 		{
 			int status;
 			Closure f = null;
 			CallInfo ci = null;
-			lua_lock( L );
-			if ( what == '>' )
+			if ( what[0] == '>' )
 			{
 				StkId func = L.top - 1;
 				luai_apicheck( L, ttisfunction( func ) );
-				what = what.next();  /* skip the '>' */
+				what = what.Substring( 1 );  /* skip the '>' */
 				f = clvalue( func );
 				StkId.dec( ref L.top );  /* pop function */
 			}
@@ -276,15 +269,14 @@ namespace KopiLua
 				f = clvalue( ci.func );
 			}
 			status = auxgetinfo( L, what, ar, f, ci );
-			if ( strchr( what, 'f' ) != null )
+			if ( what.IndexOf( 'f' ) > -1 )
 			{
 				if ( f == null ) setnilvalue( L.top );
 				else setclvalue( L, L.top, f );
 				incr_top( L );
 			}
-			if ( strchr( what, 'L' ) != null )
+			if ( what.IndexOf( 'L' ) > -1 )
 				collectvalidlines( L, f );
-			lua_unlock( L );
 			return status;
 		}
 
@@ -559,7 +551,7 @@ namespace KopiLua
 		}
 
 
-		private static CharPtr kname( Proto p, int c )
+		private static string kname( Proto p, int c )
 		{
 			if ( ISK( c ) != 0 && ttisstring( p.k[INDEXK( c )] ) )
 				return svalue( p.k[INDEXK( c )] );
@@ -568,8 +560,7 @@ namespace KopiLua
 		}
 
 
-		private static CharPtr getobjname( lua_State L, CallInfo ci, int stackpos,
-									   ref CharPtr name )
+		private static string getobjname( lua_State L, CallInfo ci, int stackpos, ref string name )
 		{
 			if ( isLua( ci ) )
 			{  /* a Lua function? */
@@ -623,7 +614,7 @@ namespace KopiLua
 		}
 
 
-		private static CharPtr getfuncname( lua_State L, CallInfo ci, ref CharPtr name )
+		private static string getfuncname( lua_State L, CallInfo ci, ref string name )
 		{
 			Instruction i;
 			if ( (isLua( ci ) && ci.tailcalls > 0) || !isLua( ci - 1 ) )
@@ -648,14 +639,14 @@ namespace KopiLua
 		}
 
 
-		public static void luaG_typeerror( lua_State L, TValue o, CharPtr op )
+		public static void luaG_typeerror( lua_State L, TValue o, string op )
 		{
-			CharPtr name = null;
-			CharPtr t = luaT_typenames[ttype( o )];
-			CharPtr kind = (isinstack( L.ci, o )) != 0 ?
+			string name = "";
+			string t = luaT_typenames[ttype( o )];
+			string kind = (isinstack( L.ci, o )) != 0 ?
 								   getobjname( L, L.ci, cast_int( o - L.base_ ), ref name ) :
 								   null;
-			if ( kind != null )
+			if ( !string.IsNullOrEmpty( kind ) )
 				luaG_runerror( L, "attempt to %s %s " + LUA_QS + " (a %s value)",
 							op, kind, name, t );
 			else
@@ -682,8 +673,8 @@ namespace KopiLua
 
 		public static int luaG_ordererror( lua_State L, TValue p1, TValue p2 )
 		{
-			CharPtr t1 = luaT_typenames[ttype( p1 )];
-			CharPtr t2 = luaT_typenames[ttype( p2 )];
+			string t1 = luaT_typenames[ttype( p1 )];
+			string t2 = luaT_typenames[ttype( p2 )];
 			if ( t1[2] == t2[2] )
 				luaG_runerror( L, "attempt to compare two %s values", t1 );
 			else
@@ -692,14 +683,13 @@ namespace KopiLua
 		}
 
 
-		private static void addinfo( lua_State L, CharPtr msg )
+		private static void addinfo( lua_State L, string msg )
 		{
 			CallInfo ci = L.ci;
 			if ( isLua( ci ) )
 			{  /* is Lua code? */
-				CharPtr buff = new CharPtr( new char[LUA_IDSIZE] );  /* add file:line information */
 				int line = currentline( L, ci );
-				luaO_chunkid( buff, getstr( getluaproto( ci ).source ), LUA_IDSIZE );
+				string buff = luaO_chunkid( getstr( getluaproto( ci ).source ), LUA_IDSIZE );
 				luaO_pushfstring( L, "%s:%d: %s", buff, line, msg );
 			}
 		}
@@ -719,7 +709,7 @@ namespace KopiLua
 			luaD_throw( L, LUA_ERRRUN );
 		}
 
-		public static void luaG_runerror( lua_State L, CharPtr fmt, params object[] argp )
+		public static void luaG_runerror( lua_State L, string fmt, params object[] argp )
 		{
 			addinfo( L, luaO_pushvfstring( L, fmt, argp ) );
 			luaG_errormsg( L );

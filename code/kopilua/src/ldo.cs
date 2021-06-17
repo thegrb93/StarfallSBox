@@ -92,12 +92,12 @@ namespace KopiLua
 			{
 				case LUA_ERRMEM:
 					{
-						setsvalue2s( L, oldtop, luaS_newliteral( L, MEMERRMSG ) );
+						setsvalue2s( L, oldtop, luaS_newstr( L, MEMERRMSG ) );
 						break;
 					}
 				case LUA_ERRERR:
 					{
-						setsvalue2s( L, oldtop, luaS_newliteral( L, "error in error handling" ) );
+						setsvalue2s( L, oldtop, luaS_newstr( L, "error in error handling" ) );
 						break;
 					}
 				case LUA_ERRSYNTAX:
@@ -150,7 +150,6 @@ namespace KopiLua
 				if ( G( L ).panic != null )
 				{
 					resetstack( L, errcode );
-					lua_unlock( L );
 					G( L ).panic( L );
 				}
 				throw new Exception();
@@ -267,9 +266,7 @@ namespace KopiLua
 				L.ci.top = L.top + LUA_MINSTACK;
 				lua_assert( L.ci.top <= L.stack_last );
 				L.allowhook = 0;  /* cannot call hooks inside a hook */
-				lua_unlock( L );
 				hook( L, ar );
-				lua_lock( L );
 				lua_assert( L.allowhook == 0 );
 				L.allowhook = 1;
 				L.ci.top = restorestack( L, ci_top );
@@ -296,7 +293,7 @@ namespace KopiLua
                 for (i=0; i<nvar; i++)  /* put extra arguments into `arg' table */
                 setobj2n(L, luaH_setnum(L, htab, i+1), L.top - nvar + i);
                 /* store counter in field `n' */
-                setnvalue(luaH_setstr(L, htab, luaS_newliteral(L, "n")), cast_num(nvar));
+                setnvalue(luaH_setstr(L, htab, luaS_new(L, "n")), cast_num(nvar));
             }
 #endif
 			/* move fixed parameters to final position */
@@ -406,9 +403,7 @@ namespace KopiLua
 				ci.nresults = nresults;
 				if ( (L.hookmask & LUA_MASKCALL) != 0 )
 					luaD_callhook( L, LUA_HOOKCALL, -1 );
-				lua_unlock( L );
 				n = curr_func( L ).c.f( L );  /* do the actual call */
-				lua_lock( L );
 				if ( n < 0 )  /* yielding? */
 					return PCRYIELD;
 				else
@@ -510,12 +505,11 @@ namespace KopiLua
 		}
 
 
-		private static int resume_error( lua_State L, CharPtr msg )
+		private static int resume_error( lua_State L, string msg )
 		{
 			L.top = L.ci.base_;
-			setsvalue2s( L, L.top, luaS_new( L, msg ) );
+			setsvalue2s( L, L.top, luaS_newstr( L, msg ) );
 			incr_top( L );
-			lua_unlock( L );
 			return LUA_ERRRUN;
 		}
 
@@ -523,7 +517,6 @@ namespace KopiLua
 		public static int lua_resume( lua_State L, int nargs )
 		{
 			int status;
-			lua_lock( L );
 			if ( L.status != LUA_YIELD && (L.status != 0 || (L.ci != L.base_ci[0])) )
 				return resume_error( L, "cannot resume non-suspended coroutine" );
 			if ( L.nCcalls >= LUAI_MAXCCALLS )
@@ -544,7 +537,6 @@ namespace KopiLua
 				status = L.status;
 			}
 			--L.nCcalls;
-			lua_unlock( L );
 			return status;
 		}
 
@@ -552,12 +544,10 @@ namespace KopiLua
 		public static int lua_yield( lua_State L, int nresults )
 		{
 			luai_userstateyield( L, nresults );
-			lua_lock( L );
 			if ( L.nCcalls > L.baseCcalls )
 				luaG_runerror( L, "attempt to yield across metamethod/C-call boundary" );
 			L.base_ = L.top - nresults;  /* protect stack slots below */
 			L.status = LUA_YIELD;
-			lua_unlock( L );
 			return -1;
 		}
 
@@ -597,7 +587,7 @@ namespace KopiLua
 		{  /* data to `f_parser' */
 			public ZIO z;
 			public Mbuffer buff = new Mbuffer();  /* buffer to be used by the scanner */
-			public CharPtr name;
+			public string name;
 		};
 
 		private static void f_parser( lua_State L, object ud )
@@ -618,11 +608,11 @@ namespace KopiLua
 		}
 
 
-		public static int luaD_protectedparser( lua_State L, ZIO z, CharPtr name )
+		public static int luaD_protectedparser( lua_State L, ZIO z, string name )
 		{
 			SParser p = new SParser();
 			int status;
-			p.z = z; p.name = new CharPtr( name );
+			p.z = z; p.name = name;
 			luaZ_initbuffer( L, p.buff );
 			status = luaD_pcall( L, f_parser, p, savestack( L, L.top ), L.errfunc );
 			luaZ_freebuffer( L, p.buff );
