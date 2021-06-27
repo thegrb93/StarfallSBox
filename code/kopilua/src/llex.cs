@@ -350,7 +350,7 @@ namespace KopiLua
 			endloop:
 			if ( seminfo != null )
 			{
-				seminfo.ts = luaX_newstring( ls, new string( luaZ_buffer( ls.buff ).chars, 2 + sep, (int)(luaZ_bufflen( ls.buff ) - 2 * (2 + sep)) ) );
+				seminfo.ts = luaX_newstring( ls, new string( luaZ_buffer( ls.buff ).chars, luaZ_buffer( ls.buff ).index + 2 + sep, (int)(luaZ_bufflen( ls.buff ) - 2 * (2 + sep)) ) );
 			}
 		}
 
@@ -415,7 +415,7 @@ namespace KopiLua
 				}
 			}
 			save_and_next( ls );  /* skip delimiter */
-			seminfo.ts = luaX_newstring( ls, new string( luaZ_buffer( ls.buff ).chars, 1, (int)(luaZ_bufflen( ls.buff ) - 2) ) );
+			seminfo.ts = luaX_newstring( ls, new string( luaZ_buffer( ls.buff ).chars, luaZ_buffer( ls.buff ).index + 1, (int)(luaZ_bufflen( ls.buff ) - 2) ) );
 		}
 
 

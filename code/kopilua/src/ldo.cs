@@ -596,7 +596,7 @@ namespace KopiLua
 			Proto tf;
 			Closure cl;
 			SParser p = (SParser)ud;
-			int c = luaZ_lookahead( p.z );
+			luaZ_lookahead( p.z );
 			luaC_checkGC( L );
 			tf = luaY_parser( L, p.z, p.buff, p.name );
 			cl = luaF_newLclosure( L, tf.nups, hvalue( gt( L ) ) );

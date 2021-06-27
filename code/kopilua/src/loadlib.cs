@@ -43,7 +43,7 @@ namespace KopiLua
 		{
 			string buff = Sandbox.FileSystem.Mounted.GetFullPath( "." );
 			string str = lua_tostring( L, -1 );
-			luaL_gsub( L, str, LUA_EXECDIR, buff );
+			lua_pushstring( L, str.Replace( LUA_EXECDIR, buff ) );
 			lua_remove( L, -2 );  /* remove original string */
 		}
 

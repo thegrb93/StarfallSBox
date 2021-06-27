@@ -419,7 +419,7 @@ namespace KopiLua
 
 			public string str;
 
-			public override string ToString() { return str.ToString(); } // for debugging
+			public override string ToString() { return str; } // for debugging
 		};
 
 		public static string getstr( TString ts ) { return ts.str; }
@@ -535,7 +535,7 @@ namespace KopiLua
 		public class ClosureType
 		{
 
-			ClosureHeader header;
+			readonly ClosureHeader header;
 
 			public static implicit operator ClosureHeader( ClosureType ctype ) { return ctype.header; }
 			public ClosureType( ClosureHeader header ) { this.header = header; }
@@ -799,7 +799,6 @@ namespace KopiLua
 				}
 		}
 
-		private const string number_chars = "0123456789+-eE.";
 		public static int luaO_str2d( string s, out lua_Number result )
 		{
 			s = s.Trim();
@@ -816,7 +815,7 @@ namespace KopiLua
 					result = System.Double.NegativeInfinity;
 				else
 					result = System.Double.PositiveInfinity;
-				return 1;
+				return 0;
 			}
 			catch
 			{
@@ -850,8 +849,7 @@ namespace KopiLua
 					case 's':
 						{
 							object o = argp[parm_index++];
-							string s = o as string;
-							if ( s == null ) s = "(null)";
+							if ( o is not string s ) s = "(null)";
 							pushstr( L, s );
 							break;
 						}
@@ -874,7 +872,7 @@ namespace KopiLua
 						}
 					case 'p':
 						{
-							pushstr( L, String.Format( "0x{0,10:X}", argp[parm_index++].GetHashCode() ) );
+							pushstr( L, "0x" + argp[parm_index++].GetHashCode().ToString( "X8" ) );
 							break;
 						}
 					case '%':

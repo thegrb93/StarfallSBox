@@ -62,10 +62,6 @@ namespace KopiLua
 			if ( !cond )
 				luaL_argerror( L, numarg, extramsg );
 		}
-		public static int luaL_checkint( lua_State L, int n ) { return (int)luaL_checkinteger( L, n ); }
-		public static int luaL_optint( lua_State L, int n, lua_Integer d ) { return (int)luaL_optinteger( L, n, d ); }
-		public static long luaL_checklong( lua_State L, int n ) { return luaL_checkinteger( L, n ); }
-		public static long luaL_optlong( lua_State L, int n, lua_Integer d ) { return luaL_optinteger( L, n, d ); }
 
 		public static string luaL_typename( lua_State L, int i ) { return lua_typename( L, lua_type( L, i ) ); }
 
@@ -407,109 +403,24 @@ namespace KopiLua
 			lua_pop( L, nup );  /* remove upvalues */
 		}
 
-
-
-		/*
-		** {======================================================
-		** getn-setn: size for arrays
-		** =======================================================
-		*/
-
-#if LUA_COMPAT_GETN
-
-		static int checkint (lua_State L, int topop) {
-		  int n = (lua_type(L, -1) == LUA_TNUMBER) ? lua_tointeger(L, -1) : -1;
-		  lua_pop(L, topop);
-		  return n;
-		}
-
-
-		static void getsizes (lua_State L) {
-		  lua_getfield(L, LUA_REGISTRYINDEX, "LUA_SIZES");
-		  if (lua_isnil(L, -1)) {  /* no `size' table? */
-			lua_pop(L, 1);  /* remove nil */
-			lua_newtable(L);  /* create it */
-			lua_pushvalue(L, -1);  /* `size' will be its own metatable */
-			lua_setmetatable(L, -2);
-			lua_pushstring(L, "kv");
-			lua_setfield(L, -2, "__mode");  /* metatable(N).__mode = "kv" */
-			lua_pushvalue(L, -1);
-			lua_setfield(L, LUA_REGISTRYINDEX, "LUA_SIZES");  /* store in register */
-		  }
-		}
-
-
-		public static void luaL_setn (lua_State L, int t, int n) {
-		  t = abs_index(L, t);
-		  lua_pushstring(L, "n");
-		  lua_rawget(L, t);
-		  if (checkint(L, 1) >= 0) {  /* is there a numeric field `n'? */
-			lua_pushstring(L, "n");  /* use it */
-			lua_pushinteger(L, n);
-			lua_rawset(L, t);
-		  }
-		  else {  /* use `sizes' */
-			getsizes(L);
-			lua_pushvalue(L, t);
-			lua_pushinteger(L, n);
-			lua_rawset(L, -3);  /* sizes[t] = n */
-			lua_pop(L, 1);  /* remove `sizes' */
-		  }
-		}
-
-
-		public static int luaL_getn (lua_State L, int t) {
-		  int n;
-		  t = abs_index(L, t);
-		  lua_pushstring(L, "n");  /* try t.n */
-		  lua_rawget(L, t);
-		  if ((n = checkint(L, 1)) >= 0) return n;
-		  getsizes(L);  /* else try sizes[t] */
-		  lua_pushvalue(L, t);
-		  lua_rawget(L, -2);
-		  if ((n = checkint(L, 2)) >= 0) return n;
-		  return (int)lua_objlen(L, t);
-		}
-
-#endif
-
 		/* }====================================================== */
-
-
-
-		public static string luaL_gsub( lua_State L, string s, string p, string r )
-		{
-			int wild = 0;
-			int sindex = 0;
-			luaL_Buffer b = new luaL_Buffer();
-			luaL_buffinit( L, b );
-			while ( (wild = s.IndexOf( p, sindex )) > 0 )
-			{
-				luaL_addstring( b, s.Substring( sindex, wild - sindex ) );  /* push prefix */
-				luaL_addstring( b, r );  /* push replacement in place of pattern */
-				sindex = wild + p.Length;  /* continue after `p' */
-			}
-			luaL_addstring( b, s );  /* push last suffix */
-			luaL_pushresult( b );
-			return lua_tostring( L, -1 );
-		}
 
 
 		public static string luaL_findtable( lua_State L, int idx, string fname, int szhint )
 		{
-			int e = 0;
 			lua_pushvalue( L, idx );
 			while ( true )
 			{
-				e = fname.IndexOf( '.' );
+				int e = fname.IndexOf( '.' );
 				if ( e == -1 ) e = fname.Length;
-				lua_pushstring( L, fname.Substring( 0, e ) );
+				string part = fname.Substring( 0, e );
+				lua_pushstring( L, part );
 				lua_rawget( L, -2 );
 				if ( lua_isnil( L, -1 ) )
 				{  /* no such field? */
 					lua_pop( L, 1 );  /* remove this nil */
 					lua_createtable( L, 0, (e == '.' ? 1 : szhint) ); /* new table for field */
-					lua_pushstring( L, fname.Substring( 0, e ) );
+					lua_pushstring( L, part );
 					lua_pushvalue( L, -2 );
 					lua_settable( L, -4 );  /* set new table into field */
 				}
@@ -544,11 +455,11 @@ namespace KopiLua
 
 		private static int emptybuffer( luaL_Buffer B )
 		{
-			uint l = (uint)bufflen( B );
+			int l = bufflen( B );
 			if ( l == 0 ) return 0;  /* put nothing on stack */
 			else
 			{
-				lua_pushstring( B.L, new string( B.buffer.chars, 0, (int)l ) );
+				lua_pushstring( B.L, new string( B.buffer.chars, 0, l ) );
 				B.p = 0;
 				B.lvl++;
 				return 1;
@@ -675,55 +586,23 @@ namespace KopiLua
 			}
 		}
 
-
-
-		/*
-		** {======================================================
-		** Load functions
-		** =======================================================
-		*/
-
-		private static int errfile( lua_State L, string what, int fnameindex )
-		{
-			string serr = strerror( errno() );
-			string filename = lua_tostring( L, fnameindex );
-			lua_pushfstring( L, "cannot %s %s: %s", what, filename, serr );
-			lua_remove( L, fnameindex );
-			return LUA_ERRFILE;
-		}
-
-
-		static string getS( lua_State L, object ud )
-		{
-			return (string)ud;
-		}
-
-
 		public static int luaL_loadbuffer( lua_State L, string buff, string name )
 		{
-			return lua_load( L, getS, buff, name );
+			return lua_load( L, buff, name );
 		}
 
 
 		public static int luaL_loadstring( lua_State L, string s )
 		{
-			return luaL_loadbuffer( L, s, s );
-		}
-
-
-
-		/* }====================================================== */
-
-
-		private static object l_alloc<T>()
-		{
-			return System.Activator.CreateInstance<T>();
+			return luaL_loadbuffer( L, s, "?" );
 		}
 
 
 		private static int panic( lua_State L )
 		{
 			string str = lua_tostring( L, -1 );
+			if ( str is null )
+				str = "Null";
 			Sandbox.Log.Error( "PANIC: unprotected error in call to Lua API (" + str + ")" );
 			return 0;
 		}

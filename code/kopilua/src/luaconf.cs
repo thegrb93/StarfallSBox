@@ -347,24 +347,6 @@ namespace KopiLua
 		*/
 		//#define LUA_COMPAT_OPENLIB /* defined higher up */
 
-
-
-		/*
-		@@ luai_apicheck is the assert macro used by the Lua-C API.
-		** CHANGE luai_apicheck if you want Lua to perform some checks in the
-		** parameters it gets from API calls. This may slow down the interpreter
-		** a bit, but may be quite useful when debugging C code that interfaces
-		** with Lua. A useful redefinition is to use assert.h.
-		*/
-#if LUA_USE_APICHECK
-			public static void luai_apicheck(lua_State L, bool o)	{Assert(o);}
-			public static void luai_apicheck(lua_State L, int o) {Assert(o != 0);}
-#else
-		public static void luai_apicheck( lua_State L, bool o ) { }
-		public static void luai_apicheck( lua_State L, int o ) { }
-#endif
-
-
 		/*
 		@@ LUAI_BITSINT defines the number of bits in an int.
 		** CHANGE here if Lua cannot automatically detect the number of bits of
@@ -698,7 +680,7 @@ namespace KopiLua
 		public static bool isspace( char c ) { return (c == ' ') || (c >= (char)0x09 && c <= (char)0x0D); }
 		public static bool isupper( char c ) { return Char.IsUpper( c ); }
 		public static bool isalnum( char c ) { return Char.IsLetterOrDigit( c ); }
-		public static bool isxdigit( char c ) { return "0123456789ABCDEFabcdef".IndexOf( c ) >= 0; }
+		public static bool isxdigit( char c ) { return "0123456789ABCDEFabcdef".Contains( c ); }
 
 		public static bool isalpha( int c ) { return Char.IsLetter( (char)c ); }
 		public static bool iscntrl( int c ) { return Char.IsControl( (char)c ); }
@@ -793,7 +775,7 @@ namespace KopiLua
 
 			public CharPtr( IntPtr ptr )
 			{
-				this.chars = new char[0];
+				this.chars = Array.Empty<char>();
 				this.index = 0;
 			}
 

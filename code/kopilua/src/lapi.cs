@@ -338,9 +338,8 @@ namespace KopiLua
 			TValue o = index2adr( L, idx );
 			if ( tonumber( ref o, n ) != 0 )
 			{
-				lua_Integer res;
 				lua_Number num = nvalue( o );
-				lua_number2integer( out res, num );
+				lua_number2integer( out int res, num );
 				return res;
 			}
 			else
@@ -378,7 +377,6 @@ namespace KopiLua
 				case LUA_TSTRING: return tsvalue( o ).len;
 				case LUA_TUSERDATA: return uvalue( o ).len;
 				case LUA_TTABLE: return (uint)luaH_getn( hvalue( o ) );
-				case LUA_TNUMBER: return luaV_tostring( L, o ) != 0 ? tsvalue( o ).len : 0;
 				default: return 0;
 			}
 		}
@@ -579,9 +577,9 @@ namespace KopiLua
 		public static int lua_getmetatable( lua_State L, int objindex )
 		{
 			TValue obj;
-			Table mt = null;
 			int res;
 			obj = index2adr( L, objindex );
+			Table mt;
 			switch ( ttype( obj ) )
 			{
 				case LUA_TTABLE:
@@ -850,11 +848,11 @@ namespace KopiLua
 		}
 
 
-		public static int lua_load( lua_State L, lua_Reader reader, object data, string chunkname )
+		public static int lua_load( lua_State L, string data, string chunkname )
 		{
 			ZIO z = new ZIO();
-			if ( chunkname == null ) chunkname = "?";
-			luaZ_init( L, z, reader, data );
+			if ( string.IsNullOrEmpty(chunkname) ) chunkname = "?";
+			luaZ_init( L, z, data );
 			return luaD_protectedparser( L, z, chunkname );
 		}
 

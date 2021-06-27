@@ -164,7 +164,7 @@ namespace KopiLua
 
 		private static int math_ldexp( lua_State L )
 		{
-			lua_pushnumber( L, ldexp( luaL_checknumber( L, 1 ), luaL_checkint( L, 2 ) ) );
+			lua_pushnumber( L, ldexp( luaL_checknumber( L, 1 ), luaL_checkinteger( L, 2 ) ) );
 			return 1;
 		}
 
@@ -218,15 +218,15 @@ namespace KopiLua
 					}
 				case 1:
 					{  /* only upper limit */
-						int u = luaL_checkint( L, 1 );
+						int u = luaL_checkinteger( L, 1 );
 						luaL_argcheck( L, 1 <= u, 1, "interval is empty" );
 						lua_pushnumber( L, Math.Floor( r * u ) + 1 );  /* int between 1 and `u' */
 						break;
 					}
 				case 2:
 					{  /* lower and upper limits */
-						int l = luaL_checkint( L, 1 );
-						int u = luaL_checkint( L, 2 );
+						int l = luaL_checkinteger( L, 1 );
+						int u = luaL_checkinteger( L, 2 );
 						luaL_argcheck( L, l <= u, 2, "interval is empty" );
 						lua_pushnumber( L, Math.Floor( r * (u - l + 1) ) + l );  /* int between `l' and `u' */
 						break;
@@ -240,7 +240,7 @@ namespace KopiLua
 		private static int math_randomseed( lua_State L )
 		{
 			//srand(luaL_checkint(L, 1));
-			rng = new Random( luaL_checkint( L, 1 ) );
+			rng = new Random( luaL_checkinteger( L, 1 ) );
 			return 0;
 		}
 

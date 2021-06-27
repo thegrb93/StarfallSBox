@@ -13,9 +13,6 @@ using System.Diagnostics;
 namespace KopiLua
 {
 	using ptrdiff_t = System.Int32;
-	using lua_Integer = System.Int32;
-	using LUA_INTFRM_T = System.Int64;
-	using UNSIGNED_LUA_INTFRM_T = System.UInt64;
 
 	public partial class Lua
 	{
@@ -27,7 +24,7 @@ namespace KopiLua
 		}
 
 
-		private static ptrdiff_t posrelat( ptrdiff_t pos, uint len )
+		private static ptrdiff_t posrelat( ptrdiff_t pos, int len )
 		{
 			/* relative string position: negative means back from end */
 			if ( pos < 0 ) pos += (ptrdiff_t)len + 1;
@@ -38,11 +35,8 @@ namespace KopiLua
 		private static int str_sub( lua_State L )
 		{
 			string s = luaL_checkstring( L, 1 );
-			uint l = (uint)s.Length;
-			ptrdiff_t start = posrelat( luaL_checkinteger( L, 2 ), l );
-			ptrdiff_t end = posrelat( luaL_optinteger( L, 3, -1 ), l );
-			if ( start < 1 ) start = 1;
-			if ( end > (ptrdiff_t)l ) end = (ptrdiff_t)l;
+			ptrdiff_t start = Math.Max(posrelat( luaL_checkinteger( L, 2 ), s.Length ), 1);
+			ptrdiff_t end = Math.Min(posrelat( luaL_optinteger( L, 3, -1 ), s.Length ), s.Length);
 			if ( start <= end )
 				lua_pushstring( L, s.Substring( start - 1, end - start + 1 ) );
 			else lua_pushstring( L, "" );
@@ -52,8 +46,6 @@ namespace KopiLua
 
 		private static int str_reverse( lua_State L )
 		{
-			uint l;
-			luaL_Buffer b = new luaL_Buffer();
 			string s = luaL_checkstring( L, 1 );
 			char[] charArray = s.ToCharArray();
 			Array.Reverse( charArray );
@@ -79,13 +71,14 @@ namespace KopiLua
 
 		private static int str_rep( lua_State L )
 		{
-			luaL_Buffer b = new luaL_Buffer();
 			string s = luaL_checkstring( L, 1 );
-			int n = luaL_checkint( L, 2 );
-			luaL_buffinit( L, b );
+			int n = luaL_checkinteger( L, 2 );
+			if ( s.Length * n > 1000000 )
+				luaL_error( L, "String is too long!" );
+			StringBuilder b = new StringBuilder();
 			while ( n-- > 0 )
-				luaL_addstring( b, s );
-			luaL_pushresult( b );
+				b.Append( s );
+			lua_pushstring( L, b.ToString() );
 			return 1;
 		}
 
@@ -93,18 +86,14 @@ namespace KopiLua
 		private static int str_byte( lua_State L )
 		{
 			string s = luaL_checkstring( L, 1 );
-			uint l = (uint)s.Length;
-			ptrdiff_t posi = posrelat( luaL_optinteger( L, 2, 1 ), l );
-			ptrdiff_t pose = posrelat( luaL_optinteger( L, 3, posi ), l );
-			int n, i;
-			if ( posi <= 0 ) posi = 1;
-			if ( (uint)pose > l ) pose = (int)l;
+			ptrdiff_t posi = Math.Max(posrelat( luaL_optinteger( L, 2, 1 ), s.Length ), 1);
+			ptrdiff_t pose = Math.Min( posrelat( luaL_optinteger( L, 3, posi ), s.Length ), s.Length );
 			if ( posi > pose ) return 0;  /* empty interval; return no values */
-			n = (int)(pose - posi + 1);
+			int n = pose - posi + 1;
 			if ( posi + n <= pose )  /* overflow? */
 				luaL_error( L, "string slice too long" );
 			luaL_checkstack( L, n, "string slice too long" );
-			for ( i = 0; i < n; i++ )
+			for ( int i = 0; i < n; ++i )
 				lua_pushinteger( L, (byte)(s[posi + i - 1]) );
 			return n;
 		}
@@ -118,7 +107,7 @@ namespace KopiLua
 			luaL_buffinit( L, b );
 			for ( i = 1; i <= n; i++ )
 			{
-				int c = luaL_checkint( L, i );
+				int c = luaL_checkinteger( L, i );
 				luaL_argcheck( L, (byte)(c) == c, i, "invalid value" );
 				luaL_addchar( b, (char)(byte)c );
 			}

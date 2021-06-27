@@ -107,7 +107,7 @@ namespace KopiLua
 				case 3:
 					{
 						int i;
-						pos = luaL_checkint( L, 2 );  /* 2nd argument is the position */
+						pos = luaL_checkinteger( L, 2 );  /* 2nd argument is the position */
 						if ( pos > e ) e = pos;  /* `grow' array if necessary */
 						for ( i = e; i > pos; i-- )
 						{  /* move up elements */
@@ -130,7 +130,7 @@ namespace KopiLua
 		private static int tremove( lua_State L )
 		{
 			int e = aux_getn( L, 1 );
-			int pos = luaL_optint( L, 2, e );
+			int pos = luaL_optinteger( L, 2, e );
 			if ( !(1 <= pos && pos <= e) )  /* position is outside bounds? */
 				return 0;  /* nothing to remove */
 			luaL_setn( L, 1, e - 1 );  /* t.n = n-1 */
@@ -162,8 +162,8 @@ namespace KopiLua
 			int i, last;
 			string sep = luaL_optstring( L, 2, "" );
 			luaL_checktype( L, 1, LUA_TTABLE );
-			i = luaL_optint( L, 3, 1 );
-			last = luaL_opt_integer( L, luaL_checkint, 4, luaL_getn( L, 1 ) );
+			i = luaL_optinteger( L, 3, 1 );
+			last = luaL_opt_integer( L, luaL_checkinteger, 4, luaL_getn( L, 1 ) );
 			luaL_buffinit( L, b );
 			for ( ; i < last; i++ )
 			{
@@ -283,7 +283,7 @@ namespace KopiLua
 				/* adjust so that smaller half is in [j..i] and larger one in [l..u] */
 				if ( i - l < u - i )
 				{
-					j = l; i = i - 1; l = i + 2;
+					j = l; --i; l = i + 2;
 				}
 				else
 				{

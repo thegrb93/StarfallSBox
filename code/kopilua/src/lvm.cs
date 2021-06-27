@@ -240,7 +240,7 @@ namespace KopiLua
 			for (; ; )
 			{
 				//int temp = strcoll(l, r);
-				int temp = String.Compare( l, r );
+				int temp = string.Compare( l, r );
 				if ( temp != 0 ) return temp;
 				else
 				{  /* strings are equal up to a `\0' */
@@ -357,7 +357,7 @@ namespace KopiLua
 						svalue( top - i ).CopyTo( 0, buffer.chars, (int)tl, (int)l );
 						tl += l;
 					}
-					setsvalue2s( L, top - n, luaS_newstr( L, buffer.ToString() ) );
+					setsvalue2s( L, top - n, luaS_newstr( L, new string(buffer.chars, buffer.index, (int)tl ) ) );
 				}
 				total -= n - 1;  /* got `n' strings to create 1 new */
 				last -= n - 1;

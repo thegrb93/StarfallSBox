@@ -159,9 +159,9 @@ namespace KopiLua
 			lua_State L1 = getthread( L, out arg );
 			lua_Debug ar = new lua_Debug();
 			string name;
-			if ( lua_getstack( L1, luaL_checkint( L, arg + 1 ), ar ) == 0 )  /* out of range? */
+			if ( lua_getstack( L1, luaL_checkinteger( L, arg + 1 ), ar ) == 0 )  /* out of range? */
 				return luaL_argerror( L, arg + 1, "level out of range" );
-			name = lua_getlocal( L1, ar, luaL_checkint( L, arg + 2 ) );
+			name = lua_getlocal( L1, ar, luaL_checkinteger( L, arg + 2 ) );
 			if ( name != null )
 			{
 				lua_xmove( L1, L, 1 );
@@ -182,12 +182,12 @@ namespace KopiLua
 			int arg;
 			lua_State L1 = getthread( L, out arg );
 			lua_Debug ar = new lua_Debug();
-			if ( lua_getstack( L1, luaL_checkint( L, arg + 1 ), ar ) == 0 )  /* out of range? */
+			if ( lua_getstack( L1, luaL_checkinteger( L, arg + 1 ), ar ) == 0 )  /* out of range? */
 				return luaL_argerror( L, arg + 1, "level out of range" );
 			luaL_checkany( L, arg + 3 );
 			lua_settop( L, arg + 3 );
 			lua_xmove( L, L1, 1 );
-			lua_pushstring( L, lua_setlocal( L1, ar, luaL_checkint( L, arg + 2 ) ) );
+			lua_pushstring( L, lua_setlocal( L1, ar, luaL_checkinteger( L, arg + 2 ) ) );
 			return 1;
 		}
 
@@ -195,7 +195,7 @@ namespace KopiLua
 		private static int auxupvalue( lua_State L, int get )
 		{
 			string name;
-			int n = luaL_checkint( L, 2 );
+			int n = luaL_checkinteger( L, 2 );
 			luaL_checktype( L, 1, LUA_TFUNCTION );
 			if ( lua_iscfunction( L, 1 ) ) return 0;  /* cannot touch C upvalues from Lua */
 			name = (get != 0) ? lua_getupvalue( L, 1, n ) : lua_setupvalue( L, 1, n );
@@ -294,7 +294,7 @@ namespace KopiLua
 			{
 				string smask = luaL_checkstring( L, arg + 2 );
 				luaL_checktype( L, arg + 1, LUA_TFUNCTION );
-				count = luaL_optint( L, arg + 3, 0 );
+				count = luaL_optinteger( L, arg + 3, 0 );
 				func = hookf; mask = makemask( smask, count );
 			}
 			gethooktable( L );

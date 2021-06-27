@@ -34,7 +34,7 @@ namespace KopiLua
 				string s = lua_tostring( L, -1 );
 				if ( s is null )
 					return luaL_error( L, LUA_QL( "tostring" ) + " must return a string to " + LUA_QL( "print" ) );
-				if ( i > 1 ) sb.Append( "\t" );
+				if ( i > 1 ) sb.Append( '\t' );
 				sb.Append( s );
 				lua_pop( L, 1 );  /* pop result */
 			}
@@ -45,7 +45,7 @@ namespace KopiLua
 
 		private static int luaB_tonumber( lua_State L )
 		{
-			int base_ = luaL_optint( L, 2, 10 );
+			int base_ = luaL_optinteger( L, 2, 10 );
 			if ( base_ == 10 )
 			{  /* standard conversion */
 				luaL_checkany( L, 1 );
@@ -75,7 +75,7 @@ namespace KopiLua
 
 		private static int luaB_error( lua_State L )
 		{
-			int level = luaL_optint( L, 2, 1 );
+			int level = luaL_optinteger( L, 2, 1 );
 			lua_settop( L, 1 );
 			if ( (lua_isstring( L, 1 ) != 0) && (level > 0) )
 			{  /* add extra information? */
@@ -120,7 +120,7 @@ namespace KopiLua
 			else
 			{
 				lua_Debug ar = new lua_Debug();
-				int level = (opt != 0) ? luaL_optint( L, 1, 1 ) : luaL_checkint( L, 1 );
+				int level = (opt != 0) ? luaL_optinteger( L, 1, 1 ) : luaL_checkinteger( L, 1 );
 				luaL_argcheck( L, level >= 0, 1, "level must be non-negative" );
 				if ( lua_getstack( L, level, ar ) == 0 )
 					luaL_argerror( L, 1, "invalid level" );
@@ -206,7 +206,7 @@ namespace KopiLua
 		private static int luaB_collectgarbage( lua_State L )
 		{
 			int o = luaL_checkoption( L, 1, "collect", opts );
-			int ex = luaL_optint( L, 2, 0 );
+			int ex = luaL_optinteger( L, 2, 0 );
 			int res = lua_gc( L, optsnum[o], ex );
 			switch ( optsnum[o] )
 			{
@@ -264,7 +264,7 @@ namespace KopiLua
 
 		private static int ipairsaux( lua_State L )
 		{
-			int i = luaL_checkint( L, 2 );
+			int i = luaL_checkinteger( L, 2 );
 			luaL_checktype( L, 1, LUA_TTABLE );
 			i++;  /* next value */
 			lua_pushinteger( L, i );
@@ -304,46 +304,6 @@ namespace KopiLua
 		}
 
 
-		/*
-		** Reader for generic `load' function: `lua_load' uses the
-		** stack for internal stuff, so the reader cannot change the
-		** stack top. Instead, it keeps its resulting string in a
-		** reserved slot inside the stack.
-		*/
-		private static string generic_reader( lua_State L, object ud )
-		{
-			//(void)ud;  /* to avoid warnings */
-			luaL_checkstack( L, 2, "too many nested functions" );
-			lua_pushvalue( L, 1 );  /* get function */
-			lua_call( L, 0, 1 );  /* call it */
-			if ( lua_isnil( L, -1 ) )
-			{
-				return "";
-			}
-			else if ( lua_isstring( L, -1 ) != 0 )
-			{
-				lua_replace( L, 3 );  /* save string in a reserved stack slot */
-				return lua_tostring( L, 3 );
-			}
-			else
-			{
-				luaL_error( L, "reader function must return a string" );
-			}
-			return "";  /* to avoid warnings */
-		}
-
-
-		private static int luaB_load( lua_State L )
-		{
-			int status;
-			string cname = luaL_optstring( L, 2, "=(load)" );
-			luaL_checktype( L, 1, LUA_TFUNCTION );
-			lua_settop( L, 3 );  /* function, eventual name, plus one reserved slot */
-			status = lua_load( L, generic_reader, null, cname );
-			return load_aux( L, status );
-		}
-
-
 		private static int luaB_assert( lua_State L )
 		{
 			luaL_checkany( L, 1 );
@@ -357,8 +317,8 @@ namespace KopiLua
 		{
 			int i, e, n;
 			luaL_checktype( L, 1, LUA_TTABLE );
-			i = luaL_optint( L, 2, 1 );
-			e = luaL_opt_integer( L, luaL_checkint, 3, luaL_getn( L, 1 ) );
+			i = luaL_optinteger( L, 2, 1 );
+			e = luaL_opt_integer( L, luaL_checkinteger, 3, luaL_getn( L, 1 ) );
 			if ( i > e ) return 0;  /* empty range */
 			n = e - i + 1;  /* number of elements */
 			if ( n <= 0 || (lua_checkstack( L, n ) == 0) )  /* n <= 0 means arith. overflow */
@@ -376,13 +336,13 @@ namespace KopiLua
 			if ( lua_type( L, 1 ) == LUA_TSTRING )
 			{
 				string str = lua_tostring( L, 1 );
-				if ( str.Length>0 && str[0] == '#' )
+				if ( str is not null && str.Length>0 && str[0] == '#' )
 				{
 					lua_pushinteger( L, n - 1 );
 					return 1;
 				}
 			}
-			int i = luaL_checkint( L, 1 );
+			int i = luaL_checkinteger( L, 1 );
 			if ( i < 0 ) i = n + i;
 			else if ( i > n ) i = n;
 			luaL_argcheck( L, 1 <= i, 1, "index out of range" );
@@ -481,7 +441,6 @@ namespace KopiLua
 		  new luaL_Reg("gcinfo", luaB_gcinfo),
 		  new luaL_Reg("getfenv", luaB_getfenv),
 		  new luaL_Reg("getmetatable", luaB_getmetatable),
-		  new luaL_Reg("load", luaB_load),
 		  new luaL_Reg("loadstring", luaB_loadstring),
 		  new luaL_Reg("next", luaB_next),
 		  new luaL_Reg("pcall", luaB_pcall),

@@ -1014,7 +1014,7 @@ namespace KopiLua
 			public lu_byte right; /* right priority */
 		}
 
-		private static priority_[] priority = {  /* ORDER OPR */
+		private static readonly priority_[] priority = {  /* ORDER OPR */
 
             new priority_(6, 6),
 			new priority_(6, 6),
@@ -1046,10 +1046,8 @@ namespace KopiLua
          */
 		private static BinOpr subexpr( LexState ls, expdesc v, uint limit )
 		{
-			BinOpr op = new BinOpr();
-			UnOpr uop = new UnOpr();
 			enterlevel( ls );
-			uop = getunopr( ls.t.token );
+			UnOpr uop = getunopr( ls.t.token );
 			if ( uop != UnOpr.OPR_NOUNOPR )
 			{
 				luaX_next( ls );
@@ -1058,7 +1056,7 @@ namespace KopiLua
 			}
 			else simpleexp( ls, v );
 			/* expand while operators have priorities higher than `limit' */
-			op = getbinopr( ls.t.token );
+			BinOpr op = getbinopr( ls.t.token );
 			while ( op != BinOpr.OPR_NOBINOPR && priority[(int)op].left > limit )
 			{
 				expdesc v2 = new expdesc();

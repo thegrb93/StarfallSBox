@@ -62,7 +62,7 @@ namespace KopiLua
 		}
 
 
-		public static TString newlstr( lua_State L, string str, uint h )
+		public static TString newstr( lua_State L, string str, uint h )
 		{
 			TString ts;
 			stringtable tb;
@@ -94,7 +94,7 @@ namespace KopiLua
 			uint step = (l >> 5) + 1;  /* if string is too long, don't hash all its chars */
 			uint l1;
 			for ( l1 = l; l1 >= step; l1 -= step )  /* compute hash */
-				h = h ^ ((h << 5) + (h >> 2) + (byte)str[(int)(l1 - 1)]);
+				h ^= ((h << 5) + (h >> 2) + (byte)str[(int)(l1 - 1)]);
 			for ( o = G( L ).strt.hash[lmod( h, G( L ).strt.size )];
 				 o != null;
 				 o = o.gch.next )
@@ -108,7 +108,7 @@ namespace KopiLua
 				}
 			}
 			//return newlstr(L, str, l, h);  /* not found */
-			TString res = newlstr( L, str, h );
+			TString res = newstr( L, str, h );
 			return res;
 		}
 

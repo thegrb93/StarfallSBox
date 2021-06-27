@@ -53,14 +53,6 @@ namespace KopiLua
 
 
 		/*
-		** functions that read/write blocks when loading/dumping Lua chunks
-		*/
-		public delegate string lua_Reader( lua_State L, object ud );
-
-		public delegate int lua_Writer( lua_State L, string p, uint sz, object ud );
-
-
-		/*
 		** basic types
 		*/
 		public const int LUA_TNONE = -1;

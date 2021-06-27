@@ -257,7 +257,6 @@ namespace KopiLua
 			if ( what[0] == '>' )
 			{
 				StkId func = L.top - 1;
-				luai_apicheck( L, ttisfunction( func ) );
 				what = what.Substring( 1 );  /* skip the '>' */
 				f = clvalue( func );
 				StkId.dec( ref L.top );  /* pop function */
@@ -265,7 +264,6 @@ namespace KopiLua
 			else if ( ar.i_ci != 0 )
 			{  /* no tail call? */
 				ci = L.base_ci[ar.i_ci];
-				lua_assert( ttisfunction( ci.func ) );
 				f = clvalue( ci.func );
 			}
 			status = auxgetinfo( L, what, ar, f, ci );
