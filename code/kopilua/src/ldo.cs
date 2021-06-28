@@ -168,19 +168,16 @@ namespace KopiLua
 			f(L, ud)
 		  );
              * */
-#if CATCH_EXCEPTIONS
             try
-#endif
 			{
 				f( L, ud );
 			}
-#if CATCH_EXCEPTIONS
             catch
             {
                 if (lj.status == 0)
                     lj.status = -1;
             }
-#endif
+
 			L.errorJmp = lj.previous;  /* restore old error handler */
 			return lj.status;
 		}
