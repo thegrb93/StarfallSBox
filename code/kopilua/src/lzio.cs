@@ -15,22 +15,18 @@ namespace KopiLua
 
 	public partial class Lua
 	{
-		public const int EOZ = -1;          /* end of stream */
-
-		//public class ZIO : Zio { };
-
-		public static int char2int( char c ) { return (int)c; }
+		public const int EOZ = -1;
 
 		public static int zgetc( ZIO z )
 		{
 			if ( z.n-- > 0 )
 			{
-				int ch = char2int( z.p[0] );
+				int ch = (int)z.p[0];
 				z.p.inc();
 				return ch;
 			}
 			else
-				return luaZ_fill( z );
+				return EOZ;
 		}
 
 		public class Mbuffer
@@ -79,7 +75,7 @@ namespace KopiLua
 			if ( string.IsNullOrEmpty( z.data ) ) return EOZ;
 			z.n = (uint)z.data.Length;
 			z.p = new CharPtr( z.data );
-			int result = char2int( z.p[0] );
+			int result = (int)z.p[0];
 			z.p.inc();
 			return result;
 		}
@@ -88,16 +84,9 @@ namespace KopiLua
 		public static int luaZ_lookahead( ZIO z )
 		{
 			if ( z.n == 0 )
-			{
-				if ( luaZ_fill( z ) == EOZ )
-					return EOZ;
-				else
-				{
-					z.n++;  /* luaZ_fill removed first byte; put back it */
-					z.p.dec();
-				}
-			}
-			return char2int( z.p[0] );
+				return EOZ;
+			else
+				return (int)z.p[0];
 		}
 
 
