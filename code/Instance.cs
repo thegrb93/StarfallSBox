@@ -32,6 +32,20 @@ namespace Starfall
 		public bool cpuMonitor = true;
 		public int ramMax = 500000; // 500MB
 
+		[ServerCmd("sf_test")]
+		static void test_sf(string code)
+		{
+			try
+			{
+				if ( code is null ) code = "";
+				new Instance( null, null, new List<SFFile> { new SFFile( "test", code ) } ).Compile();
+			}
+			catch( StarfallException m)
+			{
+				Log.Warning( m.Message );
+			}
+		}
+
 		public static List<Instance> activeInstances = new List<Instance>();
 		public static Dictionary<Player, List<Instance>> playerInstances = new Dictionary<Player, List<Instance>>();
 
@@ -50,7 +64,7 @@ namespace Starfall
 			this.entity = entity;
 		}
 
-		public void Compile( List<SFFile> files )
+		public void Compile()
 		{
 			L = Lua.lua_open();
 			Lua.lua_gc( L, Lua.LUA_GCSTOP, 0 );
@@ -74,9 +88,9 @@ namespace Starfall
 				}
 
 				Lua.lua_pushstring( L, file.filename );
-				if ( Lua.luaL_loadbuffer( L, file.code, "SF: " + file.filename ) != 0 )
+				if ( Lua.luaL_loadbuffer( L, file.code, (uint)file.code.Length, "SF: " + file.filename ) != 0 )
 				{
-					string err = Lua.lua_tostring( L, -1 );
+					string err = Lua.lua_tostring( L, -1 ).ToString();
 					if(err is null)
 						err = "Error not a string";
 					Lua.lua_settop( L, 0 ); // Clear the stack
@@ -105,7 +119,7 @@ namespace Starfall
 			Lua.lua_pushstring( L, main.filename );
 			if ( Lua.lua_pcall( L, 1, 0, -3 ) != 0 )
 			{
-				string err = Lua.lua_tostring( L, -1 );
+				string err = Lua.lua_tostring( L, -1 ).ToString();
 				if ( err is null )
 					err = "Error not a string";
 				Lua.lua_settop( L, 0 ); // Clear the stack
@@ -199,7 +213,7 @@ namespace Starfall
 			Lua.lua_pushstring( L, name );
 			if ( Lua.lua_pcall( L, 1, 0, -3 ) != 0 )
 			{
-				string err = Lua.lua_tostring( L, -1 );
+				string err = Lua.lua_tostring( L, -1 ).ToString();
 				if ( err is null )
 					err = "Error not a string";
 				Error( err );
