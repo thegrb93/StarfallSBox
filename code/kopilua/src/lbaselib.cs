@@ -61,7 +61,7 @@ namespace KopiLua
 				luaL_argcheck( L, 2 <= base_ && base_ <= 36, 2, "base out of range" );
 				try
 				{
-					lua_pushnumber( L, s1.StartsWith( "0x" ) ? Convert.ToUInt32( s1.Substring( 2 ), 16 ) : Convert.ToUInt32( s1, base_ ) );
+					lua_pushnumber( L, s1.StartsWith( "0x" ) ? Convert.ToUInt32( s1.Substring( Math.Min( s1.Length, 2 ) ), 16 ) : Convert.ToUInt32( s1, base_ ) );
 					return 1;
 				}
 				catch

@@ -227,7 +227,7 @@ namespace KopiLua
 
 		private static int check_next( LexState ls, string set )
 		{
-			if ( set.IndexOf( (char)ls.current ) != -1 )
+			if ( !set.Contains( (char)ls.current ) )
 				return 0;
 			save_and_next( ls );
 			return 1;

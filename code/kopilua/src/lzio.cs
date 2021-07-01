@@ -65,20 +65,8 @@ namespace KopiLua
 		{
 			public uint n;          /* bytes still unread */
 			public CharPtr p;           /* current position in buffer */
-			public string data;         /* additional data */
 			public lua_State L;         /* Lua state (for reader) */
 		};
-
-
-		public static int luaZ_fill( ZIO z )
-		{
-			if ( string.IsNullOrEmpty( z.data ) ) return EOZ;
-			z.n = (uint)z.data.Length;
-			z.p = new CharPtr( z.data );
-			int result = (int)z.p[0];
-			z.p.inc();
-			return result;
-		}
 
 
 		public static int luaZ_lookahead( ZIO z )
@@ -93,9 +81,8 @@ namespace KopiLua
 		public static void luaZ_init( lua_State L, ZIO z, string data )
 		{
 			z.L = L;
-			z.data = data;
-			z.n = 0;
-			z.p = null;
+			z.n = (uint)data.Length;
+			z.p = new CharPtr(data);
 		}
 
 		/* ------------------------------------------------------------------------ */

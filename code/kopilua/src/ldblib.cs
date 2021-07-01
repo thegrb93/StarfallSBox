@@ -128,7 +128,7 @@ namespace KopiLua
 			if ( lua_getinfo( L1, options, ar ) == 0 )
 				return luaL_argerror( L, arg + 2, "invalid option" );
 			lua_createtable( L, 0, 2 );
-			if ( options.IndexOf( 'S' ) > -1 )
+			if ( options.Contains( 'S' ) )
 			{
 				settabss( L, "source", ar.source );
 				settabss( L, "short_src", ar.short_src );
@@ -136,18 +136,18 @@ namespace KopiLua
 				settabsi( L, "lastlinedefined", ar.lastlinedefined );
 				settabss( L, "what", ar.what );
 			}
-			if ( options.IndexOf( 'l' ) > -1 )
+			if ( options.Contains( 'l' ) )
 				settabsi( L, "currentline", ar.currentline );
-			if ( options.IndexOf( 'u' ) > -1 )
+			if ( options.Contains( 'u' ) )
 				settabsi( L, "nups", ar.nups );
-			if ( options.IndexOf( 'n' ) > -1 )
+			if ( options.Contains( 'n' ) )
 			{
 				settabss( L, "name", ar.name );
 				settabss( L, "namewhat", ar.namewhat );
 			}
-			if ( options.IndexOf( 'L' ) > -1 )
+			if ( options.Contains( 'L' ) )
 				treatstackoption( L, L1, "activelines" );
-			if ( options.IndexOf( 'f' ) > -1 )
+			if ( options.Contains( 'f' ) )
 				treatstackoption( L, L1, "func" );
 			return 1;  /* return table */
 		}

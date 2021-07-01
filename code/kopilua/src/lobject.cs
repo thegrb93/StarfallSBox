@@ -802,12 +802,10 @@ namespace KopiLua
 		public static int luaO_str2d( string s, out lua_Number result )
 		{
 			s = s.Trim();
-			if ( s.Substring( 0, 2 ) == "0x" ) s = s.Substring( 2 );
-
 			try
 			{
 				result = Convert.ToDouble( s );
-				return 0;
+				return 1;
 			}
 			catch ( System.OverflowException )
 			{
@@ -815,12 +813,23 @@ namespace KopiLua
 					result = System.Double.NegativeInfinity;
 				else
 					result = System.Double.PositiveInfinity;
-				return 0;
-			}
-			catch
-			{
-				result = 0;
 				return 1;
+			}
+			catch( System.FormatException )
+			{
+				if ( s.Substring( 0, Math.Min( s.Length, 2 ) ) == "0x" )
+				{
+					try
+					{
+						result = int.Parse( s.Substring(2), System.Globalization.NumberStyles.HexNumber );
+						return 1;
+					}
+					catch ( System.FormatException )
+					{
+					}
+				}
+				result = 0;
+				return 0;
 			}
 		}
 
@@ -889,7 +898,7 @@ namespace KopiLua
 				n += 2;
 				fmtindex = e + 2;
 			}
-			pushstr( L, fmt );
+			pushstr( L, fmt.Substring( Math.Min( fmt.Length, fmtindex ) ) );
 			luaV_concat( L, n + 1, cast_int( L.top - L.base_ ) - 1 );
 			L.top -= n;
 			return svalue( L.top - 1 );

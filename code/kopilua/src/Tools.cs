@@ -304,11 +304,11 @@ namespace AT.MIN
 				{
 					string flags = m.Groups[2].Value;
 
-					flagAlternate = (flags.IndexOf( '#' ) >= 0);
-					flagLeft2Right = (flags.IndexOf( '-' ) >= 0);
-					flagPositiveSign = (flags.IndexOf( '+' ) >= 0);
-					flagPositiveSpace = (flags.IndexOf( ' ' ) >= 0);
-					flagGroupThousands = (flags.IndexOf( '\'' ) >= 0);
+					flagAlternate = flags.Contains( '#' );
+					flagLeft2Right = flags.Contains( '-' );
+					flagPositiveSign = flags.Contains( '+' );
+					flagPositiveSpace = flags.Contains( ' ' );
+					flagGroupThousands = flags.Contains( '\'' );
 
 					// positive + indicator overrides a
 					// positive space character

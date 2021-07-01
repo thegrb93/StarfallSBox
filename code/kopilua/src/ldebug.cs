@@ -267,13 +267,13 @@ namespace KopiLua
 				f = clvalue( ci.func );
 			}
 			status = auxgetinfo( L, what, ar, f, ci );
-			if ( what.IndexOf( 'f' ) > -1 )
+			if ( what.Contains( 'f' ) )
 			{
 				if ( f == null ) setnilvalue( L.top );
 				else setclvalue( L, L.top, f );
 				incr_top( L );
 			}
-			if ( what.IndexOf( 'L' ) > -1 )
+			if ( what.Contains( 'L' ) )
 				collectvalidlines( L, f );
 			return status;
 		}
