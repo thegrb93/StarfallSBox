@@ -208,15 +208,13 @@ namespace KopiLua
 
 
 		private readonly static luaL_Reg[] pk_funcs = {
-			new luaL_Reg("seeall", ll_seeall),
-			new luaL_Reg(null, null)
+			new luaL_Reg("seeall", ll_seeall)
 		};
 
 
 		private readonly static luaL_Reg[] ll_funcs = {
 			new luaL_Reg("module", ll_module),
-			new luaL_Reg("require", ll_require),
-			new luaL_Reg(null, null)
+			new luaL_Reg("require", ll_require)
 		};
 
 		public static int luaopen_package( lua_State L )

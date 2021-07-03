@@ -407,7 +407,7 @@ namespace KopiLua
 		private static int luaB_newproxy( lua_State L )
 		{
 			lua_settop( L, 1 );
-			lua_newuserdata( L, 0 );  /* create proxy */
+			lua_pushuserdata( L, 0 );  /* create proxy */
 			if ( lua_toboolean( L, 1 ) == 0 )
 				return 1;  /* no metatable */
 			else if ( lua_isboolean( L, 1 ) )
@@ -455,8 +455,7 @@ namespace KopiLua
 		  new luaL_Reg("tostring", luaB_tostring),
 		  new luaL_Reg("type", luaB_type),
 		  new luaL_Reg("unpack", luaB_unpack),
-		  new luaL_Reg("xpcall", luaB_xpcall),
-		  new luaL_Reg(null, null)
+		  new luaL_Reg("xpcall", luaB_xpcall)
 		};
 
 
@@ -613,8 +612,7 @@ namespace KopiLua
 		  new luaL_Reg("running", luaB_corunning),
 		  new luaL_Reg("status", luaB_costatus),
 		  new luaL_Reg("wrap", luaB_cowrap),
-		  new luaL_Reg("yield", luaB_yield),
-		  new luaL_Reg(null, null)
+		  new luaL_Reg("yield", luaB_yield)
 		};
 
 		/* }====================================================== */

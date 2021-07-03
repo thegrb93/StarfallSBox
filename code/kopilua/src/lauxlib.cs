@@ -362,20 +362,10 @@ namespace KopiLua
 			luaI_openlib( L, libname, l, 0 );
 		}
 
-		// we could just take the .Length member here, but let's try
-		// to keep it as close to the C implementation as possible.
-		private static int libsize( luaL_Reg[] l )
-		{
-			int size = 0;
-			for ( ; l[size].name != null; size++ ) ;
-			return size;
-		}
-
 		public static void luaI_openlib( lua_State L, string libname, luaL_Reg[] l, int nup )
 		{
 			if ( libname != null )
 			{
-				int size = libsize( l );
 				/* check whether lib already exists */
 				luaL_findtable( L, LUA_REGISTRYINDEX, "_LOADED", 1 );
 				lua_getfield( L, -1, libname );  /* get _LOADED[libname] */
@@ -383,7 +373,7 @@ namespace KopiLua
 				{  /* not found? */
 					lua_pop( L, 1 );  /* remove previous result */
 					/* try global variable (and create one if it does not exist) */
-					if ( luaL_findtable( L, LUA_GLOBALSINDEX, libname, size ) != null )
+					if ( luaL_findtable( L, LUA_GLOBALSINDEX, libname, l.Length ) != null )
 						luaL_error( L, "name conflict for module " + LUA_QS, libname );
 					lua_pushvalue( L, -1 );
 					lua_setfield( L, -3, libname );  /* _LOADED[libname] = new table */

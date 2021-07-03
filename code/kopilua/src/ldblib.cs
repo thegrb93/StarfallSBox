@@ -410,8 +410,7 @@ namespace KopiLua
 			new luaL_Reg("setlocal", db_setlocal),
 			new luaL_Reg("setmetatable", db_setmetatable),
 			new luaL_Reg("setupvalue", db_setupvalue),
-			new luaL_Reg("traceback", db_errorfb),
-			new luaL_Reg(null, null)
+			new luaL_Reg("traceback", db_errorfb)
 		};
 
 

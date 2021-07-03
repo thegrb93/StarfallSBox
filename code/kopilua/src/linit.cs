@@ -18,14 +18,13 @@ namespace KopiLua
 		  new luaL_Reg(LUA_TABLIBNAME, luaopen_table),
 		  new luaL_Reg(LUA_STRLIBNAME, luaopen_string),
 		  new luaL_Reg(LUA_MATHLIBNAME, luaopen_math),
-		  new luaL_Reg(LUA_DBLIBNAME, luaopen_debug),
-		  new luaL_Reg(null, null)
+		  new luaL_Reg(LUA_DBLIBNAME, luaopen_debug)
 		};
 
 
 		public static void luaL_openlibs( lua_State L )
 		{
-			for ( int i = 0; i < lualibs.Length - 1; i++ )
+			for ( int i = 0; i < lualibs.Length; i++ )
 			{
 				luaL_Reg lib = lualibs[i];
 				lua_pushcfunction( L, lib.func );

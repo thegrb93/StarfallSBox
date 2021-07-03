@@ -273,8 +273,7 @@ namespace KopiLua
 		  new luaL_Reg("sin",   math_sin),
 		  new luaL_Reg("sqrt",  math_sqrt),
 		  new luaL_Reg("tanh",   math_tanh),
-		  new luaL_Reg("tan",   math_tan),
-		  new luaL_Reg(null, null)
+		  new luaL_Reg("tan",   math_tan)
 		};
 
 

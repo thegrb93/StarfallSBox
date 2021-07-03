@@ -316,8 +316,7 @@ namespace KopiLua
 		  new luaL_Reg("insert", tinsert),
 		  new luaL_Reg("remove", tremove),
 		  new luaL_Reg("setn", setn),
-		  new luaL_Reg("sort", sort),
-		  new luaL_Reg(null, null)
+		  new luaL_Reg("sort", sort)
 		};
 
 

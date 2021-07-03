@@ -987,7 +987,7 @@ namespace KopiLua
 		}
 
 
-		public static void lua_newuserdata<T>( lua_State L, T obj )
+		public static void lua_pushuserdata<T>( lua_State L, T obj )
 		{
 			Udata u;
 			luaC_checkGC( L );
