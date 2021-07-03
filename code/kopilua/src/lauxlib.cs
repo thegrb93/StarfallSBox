@@ -381,8 +381,7 @@ namespace KopiLua
 				lua_remove( L, -2 );  /* remove _LOADED table */
 				lua_insert( L, -(nup + 1) );  /* move library table to below upvalues */
 			}
-			int reg_num = 0;
-			for ( ; l[reg_num].name != null; reg_num++ )
+			for ( int reg_num = 0; reg_num < l.Length; ++reg_num )
 			{
 				int i;
 				for ( i = 0; i < nup; i++ )  /* copy upvalues to the top */

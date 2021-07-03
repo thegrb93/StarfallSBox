@@ -336,7 +336,7 @@ namespace KopiLua
 			if ( lua_type( L, 1 ) == LUA_TSTRING )
 			{
 				string str = lua_tostring( L, 1 );
-				if ( str is not null && str.Length>0 && str[0] == '#' )
+				if ( str is not null && str.Length > 0 && str[0] == '#' )
 				{
 					lua_pushinteger( L, n - 1 );
 					return 1;
