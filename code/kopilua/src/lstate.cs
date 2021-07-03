@@ -329,15 +329,6 @@ namespace KopiLua
 
 		/* macro to convert any Lua object into a GCObject */
 		public static GCObject obj2gco( object v ) { return (GCObject)v; }
-
-
-		public static int state_size( object x ) { return Marshal.SizeOf( x ) + LUAI_EXTRASPACE; }
-		/*
-		public static lu_byte fromstate(object l)
-		{
-			return (lu_byte)(l - LUAI_EXTRASPACE);
-		}
-		*/
 		public static lua_State tostate( object l )
 		{
 			Assert( LUAI_EXTRASPACE == 0, "LUAI_EXTRASPACE not supported" );

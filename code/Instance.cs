@@ -182,15 +182,15 @@ namespace Starfall
 		}
 
 		// Pushes new userdata on stack
-		public void PushType<T>( string name, T obj )
+		public void PushType( string name, object obj )
 		{
-			Lua.lua_pushuserdata<T>( L, obj );
+			Lua.lua_pushuserdata( L, obj );
 			Lua.luaL_getmetatable( L, name );
 			Lua.lua_setmetatable( L, -2 );
 		}
-		public static void PushType<T>( Lua.lua_State L, string name, T obj )
+		public static void PushType( Lua.lua_State L, string name, object obj )
 		{
-			Lua.lua_pushuserdata<T>( L, obj );
+			Lua.lua_pushuserdata( L, obj );
 			Lua.luaL_getmetatable( L, name );
 			Lua.lua_setmetatable( L, -2 );
 		}
