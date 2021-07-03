@@ -28,16 +28,14 @@ namespace KopiLua
 			StringBuilder sb = new StringBuilder();
 			for ( i = 1; i <= n; i++ )
 			{
-				CharPtr s;
 				lua_pushvalue( L, -1 );  /* function to be called */
 				lua_pushvalue( L, i );   /* value to print */
 				lua_call( L, 1, 1 );
-				s = lua_tostring( L, -1 );  /* get result */
-				if ( s == null )
-					return luaL_error( L, LUA_QL( "tostring" ) + " must return a string to " +
-										 LUA_QL( "print" ) );
-				if ( i > 1 ) sb.Append( "\t" );
-				sb.Append( s.ToString() );
+				string s = lua_tostring( L, -1 );
+				if ( s is null )
+					return luaL_error( L, LUA_QL( "tostring" ) + " must return a string to " + LUA_QL( "print" ) );
+				if ( i > 1 ) sb.Append( '\t' );
+				sb.Append( s );
 				lua_pop( L, 1 );  /* pop result */
 			}
 			Sandbox.Log.Info( sb.ToString() );
@@ -47,7 +45,7 @@ namespace KopiLua
 
 		private static int luaB_tonumber( lua_State L )
 		{
-			int base_ = luaL_optint( L, 2, 10 );
+			int base_ = luaL_optinteger( L, 2, 10 );
 			if ( base_ == 10 )
 			{  /* standard conversion */
 				luaL_checkany( L, 1 );
@@ -59,19 +57,15 @@ namespace KopiLua
 			}
 			else
 			{
-				CharPtr s1 = luaL_checkstring( L, 1 );
-				CharPtr s2;
-				ulong n;
+				string s1 = luaL_checkstring( L, 1 );
 				luaL_argcheck( L, 2 <= base_ && base_ <= 36, 2, "base out of range" );
-				n = strtoul( s1, out s2, base_ );
-				if ( s1 != s2 )
-				{  /* at least one valid digit? */
-					while ( isspace( (byte)(s2[0]) ) ) s2 = s2.next();  /* skip trailing spaces */
-					if ( s2[0] == '\0' )
-					{  /* no invalid trailing characters? */
-						lua_pushnumber( L, (lua_Number)n );
-						return 1;
-					}
+				try
+				{
+					lua_pushnumber( L, s1.StartsWith( "0x" ) ? Convert.ToUInt32( s1.Substring( Math.Min( s1.Length, 2 ) ), 16 ) : Convert.ToUInt32( s1, base_ ) );
+					return 1;
+				}
+				catch
+				{
 				}
 			}
 			lua_pushnil( L );  /* else not a number */
@@ -81,7 +75,7 @@ namespace KopiLua
 
 		private static int luaB_error( lua_State L )
 		{
-			int level = luaL_optint( L, 2, 1 );
+			int level = luaL_optinteger( L, 2, 1 );
 			lua_settop( L, 1 );
 			if ( (lua_isstring( L, 1 ) != 0) && (level > 0) )
 			{  /* add extra information? */
@@ -126,7 +120,7 @@ namespace KopiLua
 			else
 			{
 				lua_Debug ar = new lua_Debug();
-				int level = (opt != 0) ? luaL_optint( L, 1, 1 ) : luaL_checkint( L, 1 );
+				int level = (opt != 0) ? luaL_optinteger( L, 1, 1 ) : luaL_checkinteger( L, 1 );
 				luaL_argcheck( L, level >= 0, 1, "level must be non-negative" );
 				if ( lua_getstack( L, level, ar ) == 0 )
 					luaL_argerror( L, 1, "invalid level" );
@@ -204,15 +198,15 @@ namespace KopiLua
 			return 1;
 		}
 
-		public static readonly CharPtr[] opts = {"stop", "restart", "collect",
-			"count", "step", "setpause", "setstepmul", null};
+		public static readonly string[] opts = {"stop", "restart", "collect",
+			"count", "step", "setpause", "setstepmul"};
 		public readonly static int[] optsnum = {LUA_GCSTOP, LUA_GCRESTART, LUA_GCCOLLECT,
 			LUA_GCCOUNT, LUA_GCSTEP, LUA_GCSETPAUSE, LUA_GCSETSTEPMUL};
 
 		private static int luaB_collectgarbage( lua_State L )
 		{
 			int o = luaL_checkoption( L, 1, "collect", opts );
-			int ex = luaL_optint( L, 2, 0 );
+			int ex = luaL_optinteger( L, 2, 0 );
 			int res = lua_gc( L, optsnum[o], ex );
 			switch ( optsnum[o] )
 			{
@@ -270,7 +264,7 @@ namespace KopiLua
 
 		private static int ipairsaux( lua_State L )
 		{
-			int i = luaL_checkint( L, 2 );
+			int i = luaL_checkinteger( L, 2 );
 			luaL_checktype( L, 1, LUA_TTABLE );
 			i++;  /* next value */
 			lua_pushinteger( L, i );
@@ -304,69 +298,9 @@ namespace KopiLua
 
 		private static int luaB_loadstring( lua_State L )
 		{
-			uint l;
-			CharPtr s = luaL_checklstring( L, 1, out l );
-			CharPtr chunkname = luaL_optstring( L, 2, s );
-			return load_aux( L, luaL_loadbuffer( L, s, l, chunkname ) );
-		}
-
-
-		private static int luaB_loadfile( lua_State L )
-		{
-			CharPtr fname = luaL_optstring( L, 1, null );
-			return load_aux( L, luaL_loadfile( L, fname ) );
-		}
-
-
-		/*
-		** Reader for generic `load' function: `lua_load' uses the
-		** stack for internal stuff, so the reader cannot change the
-		** stack top. Instead, it keeps its resulting string in a
-		** reserved slot inside the stack.
-		*/
-		private static CharPtr generic_reader( lua_State L, object ud, out uint size )
-		{
-			//(void)ud;  /* to avoid warnings */
-			luaL_checkstack( L, 2, "too many nested functions" );
-			lua_pushvalue( L, 1 );  /* get function */
-			lua_call( L, 0, 1 );  /* call it */
-			if ( lua_isnil( L, -1 ) )
-			{
-				size = 0;
-				return null;
-			}
-			else if ( lua_isstring( L, -1 ) != 0 )
-			{
-				lua_replace( L, 3 );  /* save string in a reserved stack slot */
-				return lua_tolstring( L, 3, out size );
-			}
-			else
-			{
-				size = 0;
-				luaL_error( L, "reader function must return a string" );
-			}
-			return null;  /* to avoid warnings */
-		}
-
-
-		private static int luaB_load( lua_State L )
-		{
-			int status;
-			CharPtr cname = luaL_optstring( L, 2, "=(load)" );
-			luaL_checktype( L, 1, LUA_TFUNCTION );
-			lua_settop( L, 3 );  /* function, eventual name, plus one reserved slot */
-			status = lua_load( L, generic_reader, null, cname );
-			return load_aux( L, status );
-		}
-
-
-		private static int luaB_dofile( lua_State L )
-		{
-			CharPtr fname = luaL_optstring( L, 1, null );
-			int n = lua_gettop( L );
-			if ( luaL_loadfile( L, fname ) != 0 ) lua_error( L );
-			lua_call( L, 0, LUA_MULTRET );
-			return lua_gettop( L ) - n;
+			string s = luaL_checkstring( L, 1 );
+			string chunkname = luaL_optstring( L, 2, s );
+			return load_aux( L, luaL_loadbuffer( L, s, chunkname ) );
 		}
 
 
@@ -383,8 +317,8 @@ namespace KopiLua
 		{
 			int i, e, n;
 			luaL_checktype( L, 1, LUA_TTABLE );
-			i = luaL_optint( L, 2, 1 );
-			e = luaL_opt_integer( L, luaL_checkint, 3, luaL_getn( L, 1 ) );
+			i = luaL_optinteger( L, 2, 1 );
+			e = luaL_opt_integer( L, luaL_checkinteger, 3, luaL_getn( L, 1 ) );
 			if ( i > e ) return 0;  /* empty range */
 			n = e - i + 1;  /* number of elements */
 			if ( n <= 0 || (lua_checkstack( L, n ) == 0) )  /* n <= 0 means arith. overflow */
@@ -399,19 +333,20 @@ namespace KopiLua
 		private static int luaB_select( lua_State L )
 		{
 			int n = lua_gettop( L );
-			if ( lua_type( L, 1 ) == LUA_TSTRING && lua_tostring( L, 1 )[0] == '#' )
+			if ( lua_type( L, 1 ) == LUA_TSTRING )
 			{
-				lua_pushinteger( L, n - 1 );
-				return 1;
+				string str = lua_tostring( L, 1 );
+				if ( str is not null && str.Length>0 && str[0] == '#' )
+				{
+					lua_pushinteger( L, n - 1 );
+					return 1;
+				}
 			}
-			else
-			{
-				int i = luaL_checkint( L, 1 );
-				if ( i < 0 ) i = n + i;
-				else if ( i > n ) i = n;
-				luaL_argcheck( L, 1 <= i, 1, "index out of range" );
-				return n - i;
-			}
+			int i = luaL_checkinteger( L, 1 );
+			if ( i < 0 ) i = n + i;
+			else if ( i > n ) i = n;
+			luaL_argcheck( L, 1 <= i, 1, "index out of range" );
+			return n - i;
 		}
 
 
@@ -459,7 +394,7 @@ namespace KopiLua
 					lua_pushstring( L, (lua_toboolean( L, 1 ) != 0 ? "true" : "false") );
 					break;
 				case LUA_TNIL:
-					lua_pushliteral( L, "nil" );
+					lua_pushstring( L, "nil" );
 					break;
 				default:
 					lua_pushfstring( L, "%s: %p", luaL_typename( L, 1 ), lua_topointer( L, 1 ) );
@@ -472,7 +407,7 @@ namespace KopiLua
 		private static int luaB_newproxy( lua_State L )
 		{
 			lua_settop( L, 1 );
-			lua_newuserdata( L, 0 );  /* create proxy */
+			lua_pushuserdata( L, 0 );  /* create proxy */
 			if ( lua_toboolean( L, 1 ) == 0 )
 				return 1;  /* no metatable */
 			else if ( lua_isboolean( L, 1 ) )
@@ -502,13 +437,10 @@ namespace KopiLua
 		private readonly static luaL_Reg[] base_funcs = {
 		  new luaL_Reg("assert", luaB_assert),
 		  new luaL_Reg("collectgarbage", luaB_collectgarbage),
-		  new luaL_Reg("dofile", luaB_dofile),
 		  new luaL_Reg("error", luaB_error),
 		  new luaL_Reg("gcinfo", luaB_gcinfo),
 		  new luaL_Reg("getfenv", luaB_getfenv),
 		  new luaL_Reg("getmetatable", luaB_getmetatable),
-		  new luaL_Reg("loadfile", luaB_loadfile),
-		  new luaL_Reg("load", luaB_load),
 		  new luaL_Reg("loadstring", luaB_loadstring),
 		  new luaL_Reg("next", luaB_next),
 		  new luaL_Reg("pcall", luaB_pcall),
@@ -523,8 +455,7 @@ namespace KopiLua
 		  new luaL_Reg("tostring", luaB_tostring),
 		  new luaL_Reg("type", luaB_type),
 		  new luaL_Reg("unpack", luaB_unpack),
-		  new luaL_Reg("xpcall", luaB_xpcall),
-		  new luaL_Reg(null, null)
+		  new luaL_Reg("xpcall", luaB_xpcall)
 		};
 
 
@@ -681,15 +612,13 @@ namespace KopiLua
 		  new luaL_Reg("running", luaB_corunning),
 		  new luaL_Reg("status", luaB_costatus),
 		  new luaL_Reg("wrap", luaB_cowrap),
-		  new luaL_Reg("yield", luaB_yield),
-		  new luaL_Reg(null, null)
+		  new luaL_Reg("yield", luaB_yield)
 		};
 
 		/* }====================================================== */
 
 
-		private static void auxopen( lua_State L, CharPtr name,
-							 lua_CFunction f, lua_CFunction u )
+		private static void auxopen( lua_State L, string name, lua_CFunction f, lua_CFunction u )
 		{
 			lua_pushcfunction( L, u );
 			lua_pushcclosure( L, f, 1 );
@@ -704,7 +633,7 @@ namespace KopiLua
 			lua_setglobal( L, "_G" );
 			/* open lib into global table */
 			luaL_register( L, "_G", base_funcs );
-			lua_pushliteral( L, LUA_VERSION );
+			lua_pushstring( L, LUA_VERSION );
 			lua_setglobal( L, "_VERSION" );  /* set global _VERSION */
 			/* `ipairs' and `pairs' need auxliliary functions as upvalues */
 			auxopen( L, "ipairs", luaB_ipairs, ipairsaux );
@@ -713,7 +642,7 @@ namespace KopiLua
 			lua_createtable( L, 0, 1 );  /* new table `w' */
 			lua_pushvalue( L, -1 );  /* `w' will be its own metatable */
 			lua_setmetatable( L, -2 );
-			lua_pushliteral( L, "kv" );
+			lua_pushstring( L, "kv" );
 			lua_setfield( L, -2, "__mode" );  /* metatable(w).__mode = "kv" */
 			lua_pushcclosure( L, luaB_newproxy, 1 );
 			lua_setglobal( L, "newproxy" );  /* set global `newproxy' */

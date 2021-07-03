@@ -121,7 +121,7 @@ namespace KopiLua
 
 		public static LocVar getlocvar( FuncState fs, int i ) { return fs.f.locvars[fs.actvar[i]]; }
 
-		public static void luaY_checklimit( FuncState fs, int v, int l, CharPtr m ) { if ( (v) > (l) ) errorlimit( fs, l, m ); }
+		public static void luaY_checklimit( FuncState fs, int v, int l, string m ) { if ( (v) > (l) ) errorlimit( fs, l, m ); }
 
 
 		/*
@@ -143,21 +143,20 @@ namespace KopiLua
 			if ( ls.t.token == (int)RESERVED.TK_NAME || ls.t.token == (int)RESERVED.TK_STRING )
 			{
 				TString ts = ls.t.seminfo.ts;
-				luaX_newstring( ls, getstr( ts ), ts.tsv.len );
+				luaX_newstring( ls, getstr( ts ) );
 			}
 		}
 
 
 		private static void error_expected( LexState ls, int token )
 		{
-			luaX_syntaxerror( ls,
-							 luaO_pushfstring( ls.L, LUA_QS + " expected", luaX_token2str( ls, token ) ) );
+			luaX_syntaxerror( ls, luaO_pushfstring( ls.L, LUA_QS + " expected", luaX_token2str( ls, token ) ) );
 		}
 
 
-		private static void errorlimit( FuncState fs, int limit, CharPtr what )
+		private static void errorlimit( FuncState fs, int limit, string what )
 		{
-			CharPtr msg = (fs.f.linedefined == 0) ?
+			string msg = (fs.f.linedefined == 0) ?
 				luaO_pushfstring( fs.L, "main function has more than %d %s", limit, what ) :
 				luaO_pushfstring( fs.L, "function at line %d has more than %d %s",
 								 fs.f.linedefined, limit, what );
@@ -189,7 +188,7 @@ namespace KopiLua
 		}
 
 
-		public static void check_condition( LexState ls, bool c, CharPtr msg )
+		public static void check_condition( LexState ls, bool c, string msg )
 		{
 			if ( !(c) ) luaX_syntaxerror( ls, msg );
 		}
@@ -253,9 +252,9 @@ namespace KopiLua
 		}
 
 
-		public static void new_localvarliteral( LexState ls, CharPtr v, int n )
+		public static void new_localvarliteral( LexState ls, string v, int n )
 		{
-			new_localvar( ls, luaX_newstring( ls, "" + v, (uint)(v.chars.Length - 1) ), n );
+			new_localvar( ls, luaX_newstring( ls, v ), n );
 		}
 
 
@@ -512,12 +511,12 @@ namespace KopiLua
 		}
 
 
-		public static Proto luaY_parser( lua_State L, ZIO z, Mbuffer buff, CharPtr name )
+		public static Proto luaY_parser( lua_State L, ZIO z, Mbuffer buff, string name )
 		{
 			LexState lexstate = new LexState();
 			FuncState funcstate = new FuncState();
 			lexstate.buff = buff;
-			luaX_setinput( L, lexstate, z, luaS_new( L, name ) );
+			luaX_setinput( L, lexstate, z, luaS_newstr( L, name ) );
 			open_func( lexstate, funcstate );
 			funcstate.f.is_vararg = VARARG_ISVARARG;  /* main func. is always vararg */
 			luaX_next( lexstate );  /* read first token */
@@ -1015,7 +1014,7 @@ namespace KopiLua
 			public lu_byte right; /* right priority */
 		}
 
-		private static priority_[] priority = {  /* ORDER OPR */
+		private static readonly priority_[] priority = {  /* ORDER OPR */
 
             new priority_(6, 6),
 			new priority_(6, 6),
@@ -1047,10 +1046,8 @@ namespace KopiLua
          */
 		private static BinOpr subexpr( LexState ls, expdesc v, uint limit )
 		{
-			BinOpr op = new BinOpr();
-			UnOpr uop = new UnOpr();
 			enterlevel( ls );
-			uop = getunopr( ls.t.token );
+			UnOpr uop = getunopr( ls.t.token );
 			if ( uop != UnOpr.OPR_NOUNOPR )
 			{
 				luaX_next( ls );
@@ -1059,7 +1056,7 @@ namespace KopiLua
 			}
 			else simpleexp( ls, v );
 			/* expand while operators have priorities higher than `limit' */
-			op = getbinopr( ls.t.token );
+			BinOpr op = getbinopr( ls.t.token );
 			while ( op != BinOpr.OPR_NOBINOPR && priority[(int)op].left > limit )
 			{
 				expdesc v2 = new expdesc();

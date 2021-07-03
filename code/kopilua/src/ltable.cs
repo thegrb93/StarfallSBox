@@ -125,8 +125,7 @@ namespace KopiLua
 			if ( ttisnumber( key ) )
 			{
 				lua_Number n = nvalue( key );
-				int k;
-				lua_number2int( out k, n );
+				lua_number2int( out int k, n );
 				if ( luai_numeq( cast_num( k ), n ) )
 					return k;
 			}
@@ -527,9 +526,8 @@ namespace KopiLua
 				case LUA_TSTRING: return luaH_getstr( t, rawtsvalue( key ) );
 				case LUA_TNUMBER:
 					{
-						int k;
 						lua_Number n = nvalue( key );
-						lua_number2int( out k, n );
+						lua_number2int( out int k, n );
 						if ( luai_numeq( cast_num( k ), nvalue( key ) ) ) /* index is int? */
 							return luaH_getnum( t, k );  /* use specialized version */
 						/* else go through ... actually on second thoughts don't, because this is C#*/

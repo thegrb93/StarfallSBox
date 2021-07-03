@@ -257,21 +257,18 @@ namespace KopiLua
 				this.array_elements = null;
 				this.array_index = 0;
 				this.vals = null;
-				this.index = 0;
 			}
 			public ArrayRef( GCObject[] array_elements, int array_index )
 			{
 				this.array_elements = array_elements;
 				this.array_index = array_index;
 				this.vals = null;
-				this.index = 0;
 			}
 			public void set( GCObject value ) { array_elements[array_index] = value; }
 			public GCObject get() { return array_elements[array_index]; }
 
 			public void set_index( int index )
 			{
-				this.index = index;
 			}
 			public void set_array( object vals )
 			{
@@ -282,13 +279,12 @@ namespace KopiLua
 
 			// ArrayRef is used to reference GCObject objects in an array, the next two members
 			// point to that array and the index of the GCObject element we are referencing
-			GCObject[] array_elements;
-			int array_index;
+			readonly GCObject[] array_elements;
+			readonly int array_index;
 
 			// ArrayRef is itself stored in an array and derived from ArrayElement, the next
 			// two members refer to itself i.e. the array and index of it's own instance.
 			ArrayRef[] vals;
-			int index;
 		}
 
 		public class OpenValRef : GCObjectRef
@@ -296,7 +292,8 @@ namespace KopiLua
 			public OpenValRef( lua_State L ) { this.L = L; }
 			public void set( GCObject value ) { this.L.openupval = value; }
 			public GCObject get() { return this.L.openupval; }
-			lua_State L;
+
+			readonly lua_State L;
 		}
 
 		public class RootGCRef : GCObjectRef
@@ -304,7 +301,8 @@ namespace KopiLua
 			public RootGCRef( global_State g ) { this.g = g; }
 			public void set( GCObject value ) { this.g.rootgc = value; }
 			public GCObject get() { return this.g.rootgc; }
-			global_State g;
+
+			readonly global_State g;
 		}
 
 		public class NextRef : GCObjectRef
@@ -312,7 +310,8 @@ namespace KopiLua
 			public NextRef( GCheader header ) { this.header = header; }
 			public void set( GCObject value ) { this.header.next = value; }
 			public GCObject get() { return this.header.next; }
-			GCheader header;
+
+			readonly GCheader header;
 		}
 
 
@@ -397,7 +396,7 @@ namespace KopiLua
 			luaS_resize( L, MINSTRTABSIZE );  /* initial size of string table */
 			luaT_init( L );
 			luaX_init( L );
-			luaS_fix( luaS_newliteral( L, MEMERRMSG ) );
+			luaS_fix( luaS_newstr( L, MEMERRMSG ) );
 			g.GCthreshold = 4 * g.totalbytes;
 		}
 
@@ -531,7 +530,6 @@ namespace KopiLua
 		public static void lua_close( lua_State L )
 		{
 			L = G( L ).mainthread;  /* only the main thread can be closed */
-			lua_lock( L );
 			luaF_close( L, L.stack[0] );  /* close all upvalues for this thread */
 			luaC_separateudata( L, 1 );  /* separate udata that have GC metamethods */
 			L.errfunc = 0;  /* no error function during GC metamethods */

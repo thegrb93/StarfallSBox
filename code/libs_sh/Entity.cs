@@ -18,8 +18,7 @@ namespace Starfall
 					Entity ent = GetType<Entity>(L, "Entity");
 					ent.Position = Lua.lua_tovector(L, 2);
 					return 0;
-				}),
-				new Lua.luaL_Reg(null, null)
+				})
 			} );
 
 			Lua.lua_pushcfunction( L, ( Lua.lua_State L ) =>

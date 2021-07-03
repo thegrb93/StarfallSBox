@@ -15,22 +15,18 @@ namespace KopiLua
 
 	public partial class Lua
 	{
-		public const int EOZ = -1;          /* end of stream */
-
-		//public class ZIO : Zio { };
-
-		public static int char2int( char c ) { return (int)c; }
+		public const int EOZ = -1;
 
 		public static int zgetc( ZIO z )
 		{
 			if ( z.n-- > 0 )
 			{
-				int ch = char2int( z.p[0] );
+				int ch = (int)z.p[0];
 				z.p.inc();
 				return ch;
 			}
 			else
-				return luaZ_fill( z );
+				return EOZ;
 		}
 
 		public class Mbuffer
@@ -69,72 +65,24 @@ namespace KopiLua
 		{
 			public uint n;          /* bytes still unread */
 			public CharPtr p;           /* current position in buffer */
-			public lua_Reader reader;
-			public object data;         /* additional data */
 			public lua_State L;         /* Lua state (for reader) */
 		};
-
-
-		public static int luaZ_fill( ZIO z )
-		{
-			uint size;
-			lua_State L = z.L;
-			CharPtr buff;
-			lua_unlock( L );
-			buff = z.reader( L, z.data, out size );
-			lua_lock( L );
-			if ( buff == null || size == 0 ) return EOZ;
-			z.n = size - 1;
-			z.p = new CharPtr( buff );
-			int result = char2int( z.p[0] );
-			z.p.inc();
-			return result;
-		}
 
 
 		public static int luaZ_lookahead( ZIO z )
 		{
 			if ( z.n == 0 )
-			{
-				if ( luaZ_fill( z ) == EOZ )
-					return EOZ;
-				else
-				{
-					z.n++;  /* luaZ_fill removed first byte; put back it */
-					z.p.dec();
-				}
-			}
-			return char2int( z.p[0] );
+				return EOZ;
+			else
+				return (int)z.p[0];
 		}
 
 
-		public static void luaZ_init( lua_State L, ZIO z, lua_Reader reader, object data )
+		public static void luaZ_init( lua_State L, ZIO z, string data )
 		{
 			z.L = L;
-			z.reader = reader;
-			z.data = data;
-			z.n = 0;
-			z.p = null;
-		}
-
-
-		/* --------------------------------------------------------------- read --- */
-		public static uint luaZ_read( ZIO z, CharPtr b, uint n )
-		{
-			b = new CharPtr( b );
-			while ( n != 0 )
-			{
-				uint m;
-				if ( luaZ_lookahead( z ) == EOZ )
-					return n;  // return number of missing bytes
-				m = (n <= z.n) ? n : z.n;  // min. between n and z.n
-				memcpy( b, z.p, m );
-				z.n -= m;
-				z.p += m;
-				b = b + m;
-				n -= m;
-			}
-			return 0;
+			z.n = (uint)data.Length;
+			z.p = new CharPtr(data);
 		}
 
 		/* ------------------------------------------------------------------------ */

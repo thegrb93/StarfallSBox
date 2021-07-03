@@ -88,9 +88,9 @@ namespace Starfall
 				}
 
 				Lua.lua_pushstring( L, file.filename );
-				if ( Lua.luaL_loadbuffer( L, file.code, (uint)file.code.Length, "SF: " + file.filename ) != 0 )
+				if ( Lua.luaL_loadbuffer( L, file.code, "SF: " + file.filename ) != 0 )
 				{
-					string err = Lua.lua_tostring( L, -1 ).ToString();
+					string err = Lua.lua_tostring( L, -1 );
 					if(err is null)
 						err = "Error not a string";
 					Lua.lua_settop( L, 0 ); // Clear the stack
@@ -119,7 +119,7 @@ namespace Starfall
 			Lua.lua_pushstring( L, main.filename );
 			if ( Lua.lua_pcall( L, 1, 0, -3 ) != 0 )
 			{
-				string err = Lua.lua_tostring( L, -1 ).ToString();
+				string err = Lua.lua_tostring( L, -1 );
 				if ( err is null )
 					err = "Error not a string";
 				Lua.lua_settop( L, 0 ); // Clear the stack
@@ -184,13 +184,13 @@ namespace Starfall
 		// Pushes new userdata on stack
 		public void PushType<T>( string name, T obj )
 		{
-			Lua.lua_newuserdata<T>( L, obj );
+			Lua.lua_pushuserdata<T>( L, obj );
 			Lua.luaL_getmetatable( L, name );
 			Lua.lua_setmetatable( L, -2 );
 		}
 		public static void PushType<T>( Lua.lua_State L, string name, T obj )
 		{
-			Lua.lua_newuserdata<T>( L, obj );
+			Lua.lua_pushuserdata<T>( L, obj );
 			Lua.luaL_getmetatable( L, name );
 			Lua.lua_setmetatable( L, -2 );
 		}
@@ -213,7 +213,7 @@ namespace Starfall
 			Lua.lua_pushstring( L, name );
 			if ( Lua.lua_pcall( L, 1, 0, -3 ) != 0 )
 			{
-				string err = Lua.lua_tostring( L, -1 ).ToString();
+				string err = Lua.lua_tostring( L, -1 );
 				if ( err is null )
 					err = "Error not a string";
 				Error( err );

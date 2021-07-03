@@ -42,48 +42,14 @@ namespace KopiLua
 
 
 		public const int MAX_INT = (Int32.MaxValue - 2);  /* maximum value of an int (-2 for safety) */
-
-		/*
-		** conversion of pointer to integer
-		** this is for hashing only; there is no problem if the integer
-		** cannot hold the whole pointer value
-		*/
-		//#define IntPoint(p)  ((uint)(lu_mem)(p))
-
-
-
-		/* type to ensure maximum alignment */
-		//typedef LUAI_USER_ALIGNMENT_T L_Umaxalign;
-
-
-		/* result of a `usual argument conversion' over lua_Number */
-		//typedef LUAI_UACNUMBER l_uacNumber;
-
-
-		/* internal assertions for in-house debugging */
-
-#if lua_assert
-
-		internal static void lua_assert(bool c) {}
-
-		internal static void lua_assert(int c) {}
-
-		internal static object check_exp(bool c, object e)		{lua_assert(c); return e;}
-		internal static object check_exp(int c, object e) { lua_assert(c != 0); return e; }
-
-#else
-
+		
 		internal static void lua_assert( bool c ) { }
 
 		internal static void lua_assert( int c ) { }
 
 		internal static object check_exp( bool c, object e ) { return e; }
-		internal static object check_exp( int c, object e ) { return e; }
-
-#endif
 
 		internal static void api_check( object o, bool e ) { }
-		internal static void api_check( object o, int e ) { lua_assert( e != 0 ); }
 
 		//#define UNUSED(x)	((void)(x))	/* to avoid warnings */
 
@@ -128,17 +94,6 @@ namespace KopiLua
 
 		/* minimum size for string buffer */
 		public const int LUA_MINBUFFER = 32;
-
-
-#if !lua_lock
-		public static void lua_lock( lua_State L ) { }
-		public static void lua_unlock( lua_State L ) { }
-#endif
-
-
-#if !luai_threadyield
-		public static void luai_threadyield( lua_State L ) { lua_unlock( L ); lua_lock( L ); }
-#endif
 
 
 		/*

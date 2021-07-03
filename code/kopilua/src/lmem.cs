@@ -38,7 +38,7 @@ namespace KopiLua
 			return luaM_reallocv<T>( L, null, n );
 		}
 
-		public static void luaM_growvector<T>( lua_State L, ref T[] v, int nelems, ref int size, int limit, CharPtr e )
+		public static void luaM_growvector<T>( lua_State L, ref T[] v, int nelems, ref int size, int limit, string e )
 		{
 			if ( nelems + 1 > size )
 				v = (T[])luaM_growaux_( L, ref v, ref size, limit, e );
@@ -76,7 +76,7 @@ namespace KopiLua
 
 
 		public static T[] luaM_growaux_<T>( lua_State L, ref T[] block, ref int size,
-							 int limit, CharPtr errormsg )
+							 int limit, string errormsg )
 		{
 			T[] newblock;
 			int newsize;

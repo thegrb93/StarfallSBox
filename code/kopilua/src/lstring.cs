@@ -20,9 +20,6 @@ namespace KopiLua
 
 		public static int sizeudata( Udata u ) { return (int)u.len; }
 
-		public static TString luaS_new( lua_State L, CharPtr s ) { return luaS_newlstr( L, s, (uint)strlen( s ) ); }
-		public static TString luaS_newliteral( lua_State L, CharPtr s ) { return luaS_newlstr( L, s, (uint)strlen( s ) ); }
-
 		public static void luaS_fix( TString s )
 		{
 			lu_byte marked = s.tsv.marked;  // can't pass properties in as ref
@@ -65,23 +62,20 @@ namespace KopiLua
 		}
 
 
-		public static TString newlstr( lua_State L, CharPtr str, uint l,
-											   uint h )
+		public static TString newstr( lua_State L, string str, uint h )
 		{
 			TString ts;
 			stringtable tb;
+			uint l = (uint)str.Length;
 			if ( l + 1 > MAX_SIZET / GetUnmanagedSize( typeof( char ) ) )
 				luaM_toobig( L );
-			ts = new TString( new char[l + 1] );
+			ts = new TString( str );
 			AddTotalBytes( L, (int)(l + 1) * GetUnmanagedSize( typeof( char ) ) + GetUnmanagedSize( typeof( TString ) ) );
 			ts.tsv.len = l;
 			ts.tsv.hash = h;
 			ts.tsv.marked = luaC_white( G( L ) );
 			ts.tsv.tt = LUA_TSTRING;
 			ts.tsv.reserved = 0;
-			//memcpy(ts+1, str, l*GetUnmanagedSize(typeof(char)));
-			memcpy( ts.str.chars, str.chars, str.index, (int)l );
-			ts.str[l] = '\0';  /* ending 0 */
 			tb = G( L ).strt;
 			h = (uint)lmod( h, tb.size );
 			ts.tsv.next = tb.hash[h];  /* chain new entry */
@@ -92,20 +86,21 @@ namespace KopiLua
 			return ts;
 		}
 
-		public static TString luaS_newlstr( lua_State L, CharPtr str, uint l )
+		public static TString luaS_newstr( lua_State L, string str )
 		{
 			GCObject o;
-			uint h = (uint)l;  /* seed */
+			uint l = (uint)str.Length;
+			uint h = l;  /* seed */
 			uint step = (l >> 5) + 1;  /* if string is too long, don't hash all its chars */
 			uint l1;
 			for ( l1 = l; l1 >= step; l1 -= step )  /* compute hash */
-				h = h ^ ((h << 5) + (h >> 2) + (byte)str[l1 - 1]);
+				h ^= ((h << 5) + (h >> 2) + (byte)str[(int)(l1 - 1)]);
 			for ( o = G( L ).strt.hash[lmod( h, G( L ).strt.size )];
 				 o != null;
 				 o = o.gch.next )
 			{
 				TString ts = rawgco2ts( o );
-				if ( ts.tsv.len == l && (memcmp( str, getstr( ts ), l ) == 0) )
+				if ( ts.tsv.len == l && str == getstr( ts ) )
 				{
 					/* string may be dead */
 					if ( isdead( G( L ), o ) ) changewhite( o );
@@ -113,7 +108,7 @@ namespace KopiLua
 				}
 			}
 			//return newlstr(L, str, l, h);  /* not found */
-			TString res = newlstr( L, str, l, h );
+			TString res = newstr( L, str, h );
 			return res;
 		}
 

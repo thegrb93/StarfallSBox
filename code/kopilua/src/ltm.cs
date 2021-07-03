@@ -49,13 +49,13 @@ namespace KopiLua
 
 		public static TValue fasttm( lua_State l, Table et, TMS e ) { return gfasttm( G( l ), et, e ); }
 
-		public readonly static CharPtr[] luaT_typenames = {
+		public readonly static string[] luaT_typenames = {
 		  "nil", "boolean", "userdata", "number",
 		  "string", "table", "function", "userdata", "thread",
 		  "proto", "upval"
 		};
 
-		private readonly static CharPtr[] luaT_eventname = {  /* ORDER TM */
+		private readonly static string[] luaT_eventname = {  /* ORDER TM */
 			"__index", "__newindex",
 			"__gc", "__mode", "__eq",
 			"__add", "__sub", "__mul", "__div", "__mod",
@@ -68,7 +68,7 @@ namespace KopiLua
 			int i;
 			for ( i = 0; i < (int)TMS.TM_N; i++ )
 			{
-				G( L ).tmname[i] = luaS_new( L, luaT_eventname[i] );
+				G( L ).tmname[i] = luaS_newstr( L, luaT_eventname[i] );
 				luaS_fix( G( L ).tmname[i] );  /* never collect these names */
 			}
 		}

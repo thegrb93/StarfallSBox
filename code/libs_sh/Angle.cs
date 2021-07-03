@@ -62,8 +62,6 @@ namespace Starfall
 					Lua.lua_pushvector(L, Lua.lua_toangle(L, 1).GetUp());
 					return 1;
 				}),*/
-
-				new Lua.luaL_Reg(null, null)
 			} );
 			Lua.lua_pop( L, 1 );
 

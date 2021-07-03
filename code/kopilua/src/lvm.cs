@@ -61,8 +61,8 @@ namespace KopiLua
 			else
 			{
 				lua_Number n = nvalue( obj );
-				CharPtr s = lua_number2str( n );
-				setsvalue2s( L, obj, luaS_new( L, s ) );
+				string s = lua_number2str( n );
+				setsvalue2s( L, obj, luaS_newstr( L, s ) );
 				return 1;
 			}
 		}
@@ -233,18 +233,18 @@ namespace KopiLua
 
 		private static int l_strcmp( TString ls, TString rs )
 		{
-			CharPtr l = getstr( ls );
+			string l = getstr( ls );
 			uint ll = ls.tsv.len;
-			CharPtr r = getstr( rs );
+			string r = getstr( rs );
 			uint lr = rs.tsv.len;
 			for (; ; )
 			{
 				//int temp = strcoll(l, r);
-				int temp = String.Compare( l.ToString(), r.ToString() );
+				int temp = string.Compare( l, r );
 				if ( temp != 0 ) return temp;
 				else
 				{  /* strings are equal up to a `\0' */
-					uint len = (uint)l.ToString().Length;  /* index of first `\0' in both strings */
+					uint len = (uint)l.Length;  /* index of first `\0' in both strings */
 					if ( len == lr )  /* r is finished? */
 						return (len == ll) ? 0 : 1;
 					else if ( len == ll )  /* l is finished? */
@@ -354,10 +354,10 @@ namespace KopiLua
 					for ( i = n; i > 0; i-- )
 					{  /* concat all strings */
 						uint l = tsvalue( top - i ).len;
-						memcpy( buffer.chars, (int)tl, svalue( top - i ).chars, (int)l );
+						svalue( top - i ).CopyTo( 0, buffer.chars, (int)tl, (int)l );
 						tl += l;
 					}
-					setsvalue2s( L, top - n, luaS_newlstr( L, buffer, tl ) );
+					setsvalue2s( L, top - n, luaS_newstr( L, new string(buffer.chars, buffer.index, (int)tl ) ) );
 				}
 				total -= n - 1;  /* got `n' strings to create 1 new */
 				last -= n - 1;
@@ -417,7 +417,7 @@ namespace KopiLua
 		internal static TValue KBx( lua_State L, Instruction i, TValue[] k ) { return k[GETARG_Bx( i )]; }
 
 
-		public static void dojump( lua_State L, InstructionPtr pc, int i ) { pc.pc += i; luai_threadyield( L ); }
+		public static void dojump( lua_State L, InstructionPtr pc, int i ) { pc.pc += i; }
 
 
 		//#define Protect(x)	{ L.savedpc = pc; {x;}; base = L.base_; }

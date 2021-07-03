@@ -102,7 +102,6 @@ namespace KopiLua
 		public static int lua_checkstack( lua_State L, int size )
 		{
 			int res = 1;
-			lua_lock( L );
 			if ( size > LUAI_MAXCSTACK || (L.top - L.base_ + size) > LUAI_MAXCSTACK )
 				res = 0;  /* stack overflow */
 			else if ( size > 0 )
@@ -111,7 +110,6 @@ namespace KopiLua
 				if ( L.ci.top < L.top + size )
 					L.ci.top = L.top + size;
 			}
-			lua_unlock( L );
 			return res;
 		}
 
@@ -120,7 +118,6 @@ namespace KopiLua
 		{
 			int i;
 			if ( from == to ) return;
-			lua_lock( to );
 			api_checknelems( from, n );
 			api_check( from, G( from ) == G( to ) );
 			api_check( from, to.ci.top - to.top >= n );
@@ -129,7 +126,6 @@ namespace KopiLua
 			{
 				setobj2s( to, StkId.inc( ref to.top ), from.top + i );
 			}
-			lua_unlock( to );
 		}
 
 
@@ -142,10 +138,8 @@ namespace KopiLua
 		public static lua_CFunction lua_atpanic( lua_State L, lua_CFunction panicf )
 		{
 			lua_CFunction old;
-			lua_lock( L );
 			old = G( L ).panic;
 			G( L ).panic = panicf;
-			lua_unlock( L );
 			return old;
 		}
 
@@ -153,12 +147,10 @@ namespace KopiLua
 		public static lua_State lua_newthread( lua_State L )
 		{
 			lua_State L1;
-			lua_lock( L );
 			luaC_checkGC( L );
 			L1 = luaE_newthread( L );
 			setthvalue( L, L.top, L1 );
 			api_incr_top( L );
-			lua_unlock( L );
 			luai_userstatethread( L, L1 );
 			return L1;
 		}
@@ -178,7 +170,6 @@ namespace KopiLua
 
 		public static void lua_settop( lua_State L, int idx )
 		{
-			lua_lock( L );
 			if ( idx >= 0 )
 			{
 				api_check( L, idx <= L.stack_last - L.base_ );
@@ -191,19 +182,16 @@ namespace KopiLua
 				api_check( L, -(idx + 1) <= (L.top - L.base_) );
 				L.top += idx + 1;  /* `subtract' index (index is negative) */
 			}
-			lua_unlock( L );
 		}
 
 
 		public static void lua_remove( lua_State L, int idx )
 		{
 			StkId p;
-			lua_lock( L );
 			p = index2adr( L, idx );
 			api_checkvalidindex( L, p );
 			while ( (p = p[1]) < L.top ) setobjs2s( L, p - 1, p );
 			StkId.dec( ref L.top );
-			lua_unlock( L );
 		}
 
 
@@ -211,19 +199,16 @@ namespace KopiLua
 		{
 			StkId p;
 			StkId q;
-			lua_lock( L );
 			p = index2adr( L, idx );
 			api_checkvalidindex( L, p );
 			for ( q = L.top; q > p; StkId.dec( ref q ) ) setobjs2s( L, q, q - 1 );
 			setobjs2s( L, p, L.top );
-			lua_unlock( L );
 		}
 
 
 		public static void lua_replace( lua_State L, int idx )
 		{
 			StkId o;
-			lua_lock( L );
 			/* explicit test for incompatible code */
 			if ( idx == LUA_ENVIRONINDEX && L.ci == L.base_ci[0] )
 				luaG_runerror( L, "no calling environment" );
@@ -244,16 +229,13 @@ namespace KopiLua
 					luaC_barrier( L, curr_func( L ), L.top - 1 );
 			}
 			StkId.dec( ref L.top );
-			lua_unlock( L );
 		}
 
 
 		public static void lua_pushvalue( lua_State L, int idx )
 		{
-			lua_lock( L );
 			setobj2s( L, L.top, index2adr( L, idx ) );
 			api_incr_top( L );
-			lua_unlock( L );
 		}
 
 
@@ -270,7 +252,7 @@ namespace KopiLua
 		}
 
 
-		public static CharPtr lua_typename( lua_State L, int t )
+		public static string lua_typename( lua_State L, int t )
 		{
 			//UNUSED(L);
 			return (t == LUA_TNONE) ? "no value" : luaT_typenames[t];
@@ -319,11 +301,9 @@ namespace KopiLua
 		{
 			StkId o1, o2;
 			int i;
-			lua_lock( L );  /* may call tag method */
 			o1 = index2adr( L, index1 );
 			o2 = index2adr( L, index2 );
 			i = (o1 == luaO_nilobject || o2 == luaO_nilobject) ? 0 : equalobj( L, o1, o2 );
-			lua_unlock( L );
 			return i;
 		}
 
@@ -332,12 +312,10 @@ namespace KopiLua
 		{
 			StkId o1, o2;
 			int i;
-			lua_lock( L );  /* may call tag method */
 			o1 = index2adr( L, index1 );
 			o2 = index2adr( L, index2 );
 			i = (o1 == luaO_nilobject || o2 == luaO_nilobject) ? 0
 				 : luaV_lessthan( L, o1, o2 );
-			lua_unlock( L );
 			return i;
 		}
 
@@ -360,9 +338,8 @@ namespace KopiLua
 			TValue o = index2adr( L, idx );
 			if ( tonumber( ref o, n ) != 0 )
 			{
-				lua_Integer res;
 				lua_Number num = nvalue( o );
-				lua_number2integer( out res, num );
+				lua_number2integer( out int res, num );
 				return res;
 			}
 			else
@@ -376,23 +353,18 @@ namespace KopiLua
 			return (l_isfalse( o ) == 0) ? 1 : 0;
 		}
 
-		public static CharPtr lua_tolstring( lua_State L, int idx, out uint len )
+		public static string lua_tostring( lua_State L, int idx)
 		{
 			StkId o = index2adr( L, idx );
 			if ( !ttisstring( o ) )
 			{
-				lua_lock( L );  /* `luaV_tostring' may create a new string */
 				if ( luaV_tostring( L, o ) == 0 )
 				{  /* conversion failed? */
-					len = 0;
-					lua_unlock( L );
 					return null;
 				}
 				luaC_checkGC( L );
 				o = index2adr( L, idx );  /* previous call may reallocate the stack */
-				lua_unlock( L );
 			}
-			len = tsvalue( o ).len;
 			return svalue( o );
 		}
 
@@ -405,14 +377,6 @@ namespace KopiLua
 				case LUA_TSTRING: return tsvalue( o ).len;
 				case LUA_TUSERDATA: return uvalue( o ).len;
 				case LUA_TTABLE: return (uint)luaH_getn( hvalue( o ) );
-				case LUA_TNUMBER:
-					{
-						uint l;
-						lua_lock( L );  /* `luaV_tostring' may create a new string */
-						l = (luaV_tostring( L, o ) != 0 ? tsvalue( o ).len : 0);
-						lua_unlock( L );
-						return l;
-					}
 				default: return 0;
 			}
 		}
@@ -468,86 +432,60 @@ namespace KopiLua
 
 		public static void lua_pushnil( lua_State L )
 		{
-			lua_lock( L );
 			setnilvalue( L.top );
 			api_incr_top( L );
-			lua_unlock( L );
 		}
 
 
 		public static void lua_pushnumber( lua_State L, lua_Number n )
 		{
-			lua_lock( L );
 			setnvalue( L.top, n );
 			api_incr_top( L );
-			lua_unlock( L );
 		}
 
 
 		public static void lua_pushinteger( lua_State L, lua_Integer n )
 		{
-			lua_lock( L );
 			setnvalue( L.top, cast_num( n ) );
 			api_incr_top( L );
-			lua_unlock( L );
 		}
 
 
-		public static void lua_pushlstring( lua_State L, CharPtr s, uint len )
-		{
-			lua_lock( L );
-			luaC_checkGC( L );
-			setsvalue2s( L, L.top, luaS_newlstr( L, s, len ) );
-			api_incr_top( L );
-			lua_unlock( L );
-		}
-
-
-		public static void lua_pushstring( lua_State L, CharPtr s )
+		public static void lua_pushstring( lua_State L, string s )
 		{
 			if ( s == null )
 				lua_pushnil( L );
 			else
-				lua_pushlstring( L, s, (uint)strlen( s ) );
+			{
+				luaC_checkGC( L );
+				setsvalue2s( L, L.top, luaS_newstr( L, s ) );
+				api_incr_top( L );
+			}
 		}
 
 
-		public static CharPtr lua_pushvfstring( lua_State L, CharPtr fmt,
-											  object[] argp )
+		public static string lua_pushvfstring( lua_State L, string fmt, object[] argp )
 		{
-			CharPtr ret;
-			lua_lock( L );
 			luaC_checkGC( L );
-			ret = luaO_pushvfstring( L, fmt, argp );
-			lua_unlock( L );
-			return ret;
+			return luaO_pushvfstring( L, fmt, argp );
 		}
 
 
-		public static CharPtr lua_pushfstring( lua_State L, CharPtr fmt )
+		public static string lua_pushfstring( lua_State L, string fmt )
 		{
-			CharPtr ret;
-			lua_lock( L );
 			luaC_checkGC( L );
-			ret = luaO_pushvfstring( L, fmt, null );
-			lua_unlock( L );
-			return ret;
+			return luaO_pushvfstring( L, fmt, null );
 		}
 
-		public static CharPtr lua_pushfstring( lua_State L, CharPtr fmt, params object[] p )
+		public static string lua_pushfstring( lua_State L, string fmt, params object[] p )
 		{
-			CharPtr ret;
-			lua_lock( L );
 			luaC_checkGC( L );
-			ret = luaO_pushvfstring( L, fmt, p );
-			lua_unlock( L );
-			return ret;
+			return luaO_pushvfstring( L, fmt, p );
 		}
 
 		public static void lua_pushcclosure( lua_State L, lua_CFunction fn, int n )
 		{
 			Closure cl;
-			lua_lock( L );
 			luaC_checkGC( L );
 			api_checknelems( L, n );
 			cl = luaF_newCclosure( L, n, getcurrenv( L ) );
@@ -558,34 +496,27 @@ namespace KopiLua
 			setclvalue( L, L.top, cl );
 			lua_assert( iswhite( obj2gco( cl ) ) );
 			api_incr_top( L );
-			lua_unlock( L );
 		}
 
 
 		public static void lua_pushboolean( lua_State L, int b )
 		{
-			lua_lock( L );
 			setbvalue( L.top, (b != 0) ? 1 : 0 );  /* ensure that true is 1 */
 			api_incr_top( L );
-			lua_unlock( L );
 		}
 
 
 		public static void lua_pushlightuserdata( lua_State L, object p )
 		{
-			lua_lock( L );
 			setpvalue( L.top, p );
 			api_incr_top( L );
-			lua_unlock( L );
 		}
 
 
 		public static int lua_pushthread( lua_State L )
 		{
-			lua_lock( L );
 			setthvalue( L, L.top, L );
 			api_incr_top( L );
-			lua_unlock( L );
 			return (G( L ).mainthread == L) ? 1 : 0;
 		}
 
@@ -599,67 +530,56 @@ namespace KopiLua
 		public static void lua_gettable( lua_State L, int idx )
 		{
 			StkId t;
-			lua_lock( L );
 			t = index2adr( L, idx );
 			api_checkvalidindex( L, t );
 			luaV_gettable( L, t, L.top - 1, L.top - 1 );
-			lua_unlock( L );
 		}
 
-		public static void lua_getfield( lua_State L, int idx, CharPtr k )
+		public static void lua_getfield( lua_State L, int idx, string k )
 		{
 			StkId t;
 			TValue key = new TValue();
-			lua_lock( L );
 			t = index2adr( L, idx );
 			api_checkvalidindex( L, t );
-			setsvalue( L, key, luaS_new( L, k ) );
+			setsvalue( L, key, luaS_newstr( L, k ) );
 			luaV_gettable( L, t, key, L.top );
 			api_incr_top( L );
-			lua_unlock( L );
 		}
 
 
 		public static void lua_rawget( lua_State L, int idx )
 		{
 			StkId t;
-			lua_lock( L );
 			t = index2adr( L, idx );
 			api_check( L, ttistable( t ) );
 			setobj2s( L, L.top - 1, luaH_get( hvalue( t ), L.top - 1 ) );
-			lua_unlock( L );
 		}
 
 
 		public static void lua_rawgeti( lua_State L, int idx, int n )
 		{
 			StkId o;
-			lua_lock( L );
 			o = index2adr( L, idx );
 			api_check( L, ttistable( o ) );
 			setobj2s( L, L.top, luaH_getnum( hvalue( o ), n ) );
 			api_incr_top( L );
-			lua_unlock( L );
 		}
 
 
 		public static void lua_createtable( lua_State L, int narray, int nrec )
 		{
-			lua_lock( L );
 			luaC_checkGC( L );
 			sethvalue( L, L.top, luaH_new( L, narray, nrec ) );
 			api_incr_top( L );
-			lua_unlock( L );
 		}
 
 
 		public static int lua_getmetatable( lua_State L, int objindex )
 		{
 			TValue obj;
-			Table mt = null;
 			int res;
-			lua_lock( L );
 			obj = index2adr( L, objindex );
+			Table mt;
 			switch ( ttype( obj ) )
 			{
 				case LUA_TTABLE:
@@ -680,16 +600,13 @@ namespace KopiLua
 				api_incr_top( L );
 				res = 1;
 			}
-			lua_unlock( L );
 			return res;
 		}
 
 
 		public static void lua_getfenv( lua_State L, int idx )
 		{
-			StkId o;
-			lua_lock( L );
-			o = index2adr( L, idx );
+			StkId o = index2adr( L, idx );
 			api_checkvalidindex( L, o );
 			switch ( ttype( o ) )
 			{
@@ -707,7 +624,6 @@ namespace KopiLua
 					break;
 			}
 			api_incr_top( L );
-			lua_unlock( L );
 		}
 
 
@@ -718,67 +634,53 @@ namespace KopiLua
 
 		public static void lua_settable( lua_State L, int idx )
 		{
-			StkId t;
-			lua_lock( L );
 			api_checknelems( L, 2 );
-			t = index2adr( L, idx );
+			StkId t = index2adr( L, idx );
 			api_checkvalidindex( L, t );
 			luaV_settable( L, t, L.top - 2, L.top - 1 );
 			L.top -= 2;  /* pop index and value */
-			lua_unlock( L );
 		}
 
 
-		public static void lua_setfield( lua_State L, int idx, CharPtr k )
+		public static void lua_setfield( lua_State L, int idx, string k )
 		{
-			StkId t;
 			TValue key = new TValue();
-			lua_lock( L );
 			api_checknelems( L, 1 );
-			t = index2adr( L, idx );
+			StkId t = index2adr( L, idx );
 			api_checkvalidindex( L, t );
-			setsvalue( L, key, luaS_new( L, k ) );
+			setsvalue( L, key, luaS_newstr( L, k ) );
 			luaV_settable( L, t, key, L.top - 1 );
 			StkId.dec( ref L.top );  /* pop value */
-			lua_unlock( L );
 		}
 
 
 		public static void lua_rawset( lua_State L, int idx )
 		{
-			StkId t;
-			lua_lock( L );
 			api_checknelems( L, 2 );
-			t = index2adr( L, idx );
+			StkId t = index2adr( L, idx );
 			api_check( L, ttistable( t ) );
 			setobj2t( L, luaH_set( L, hvalue( t ), L.top - 2 ), L.top - 1 );
 			luaC_barriert( L, hvalue( t ), L.top - 1 );
 			L.top -= 2;
-			lua_unlock( L );
 		}
 
 
 		public static void lua_rawseti( lua_State L, int idx, int n )
 		{
-			StkId o;
-			lua_lock( L );
 			api_checknelems( L, 1 );
-			o = index2adr( L, idx );
+			StkId o = index2adr( L, idx );
 			api_check( L, ttistable( o ) );
 			setobj2t( L, luaH_setnum( L, hvalue( o ), n ), L.top - 1 );
 			luaC_barriert( L, hvalue( o ), L.top - 1 );
 			StkId.dec( ref L.top );
-			lua_unlock( L );
 		}
 
 
 		public static int lua_setmetatable( lua_State L, int objindex )
 		{
-			TValue obj;
 			Table mt;
-			lua_lock( L );
 			api_checknelems( L, 1 );
-			obj = index2adr( L, objindex );
+			TValue obj = index2adr( L, objindex );
 			api_checkvalidindex( L, obj );
 			if ( ttisnil( L.top - 1 ) )
 				mt = null;
@@ -810,7 +712,6 @@ namespace KopiLua
 					}
 			}
 			StkId.dec( ref L.top );
-			lua_unlock( L );
 			return 1;
 		}
 
@@ -819,7 +720,6 @@ namespace KopiLua
 		{
 			StkId o;
 			int res = 1;
-			lua_lock( L );
 			api_checknelems( L, 1 );
 			o = index2adr( L, idx );
 			api_checkvalidindex( L, o );
@@ -841,7 +741,6 @@ namespace KopiLua
 			}
 			if ( res != 0 ) luaC_objbarrier( L, gcvalue( o ), hvalue( L.top - 1 ) );
 			StkId.dec( ref L.top );
-			lua_unlock( L );
 			return res;
 		}
 
@@ -866,14 +765,11 @@ namespace KopiLua
 
 		public static void lua_call( lua_State L, int nargs, int nresults )
 		{
-			StkId func;
-			lua_lock( L );
 			api_checknelems( L, nargs + 1 );
 			checkresults( L, nargs, nresults );
-			func = L.top - (nargs + 1);
+			StkId func = L.top - (nargs + 1);
 			luaD_call( L, func, nresults );
 			adjustresults( L, nresults );
-			lua_unlock( L );
 		}
 
 
@@ -901,7 +797,6 @@ namespace KopiLua
 			CallS c = new CallS();
 			int status;
 			ptrdiff_t func;
-			lua_lock( L );
 			api_checknelems( L, nargs + 1 );
 			checkresults( L, nargs, nresults );
 			if ( errfunc == 0 )
@@ -916,7 +811,6 @@ namespace KopiLua
 			c.nresults = nresults;
 			status = luaD_pcall( L, f_call, c, savestack( L, c.func ), func );
 			adjustresults( L, nresults );
-			lua_unlock( L );
 			return status;
 		}
 
@@ -948,33 +842,18 @@ namespace KopiLua
 		public static int lua_cpcall( lua_State L, lua_CFunction func, object ud )
 		{
 			CCallS c = new CCallS();
-			int status;
-			lua_lock( L );
 			c.func = func;
 			c.ud = ud;
-			status = luaD_pcall( L, f_Ccall, c, savestack( L, L.top ), 0 );
-			lua_unlock( L );
-			return status;
+			return luaD_pcall( L, f_Ccall, c, savestack( L, L.top ), 0 );
 		}
 
 
-		public static int lua_load( lua_State L, lua_Reader reader, object data,
-							  CharPtr chunkname )
+		public static int lua_load( lua_State L, string data, string chunkname )
 		{
 			ZIO z = new ZIO();
-			int status;
-			lua_lock( L );
-			if ( chunkname == null ) chunkname = "?";
-			luaZ_init( L, z, reader, data );
-			status = luaD_protectedparser( L, z, chunkname );
-			lua_unlock( L );
-			return status;
-		}
-
-
-		public static int lua_dump( lua_State L, lua_Writer writer, object data )
-		{
-			return 1;
+			if ( string.IsNullOrEmpty(chunkname) ) chunkname = "?";
+			luaZ_init( L, z, data );
+			return luaD_protectedparser( L, z, chunkname );
 		}
 
 
@@ -992,7 +871,6 @@ namespace KopiLua
 		{
 			int res = 0;
 			global_State g;
-			lua_lock( L );
 			g = G( L );
 			switch ( what )
 			{
@@ -1056,7 +934,6 @@ namespace KopiLua
 					res = -1;  /* invalid option */
 					break;
 			}
-			lua_unlock( L );
 			return res;
 		}
 
@@ -1069,10 +946,8 @@ namespace KopiLua
 
 		public static int lua_error( lua_State L )
 		{
-			lua_lock( L );
 			api_checknelems( L, 1 );
 			luaG_errormsg( L );
-			lua_unlock( L );
 			return 0;  /* to avoid warnings */
 		}
 
@@ -1081,7 +956,6 @@ namespace KopiLua
 		{
 			StkId t;
 			int more;
-			lua_lock( L );
 			t = index2adr( L, idx );
 			api_check( L, ttistable( t ) );
 			more = luaH_next( L, hvalue( t ), L.top - 1 );
@@ -1091,14 +965,12 @@ namespace KopiLua
 			}
 			else  /* no more elements */
 				StkId.dec( ref L.top );  /* remove key */
-			lua_unlock( L );
 			return more;
 		}
 
 
 		public static void lua_concat( lua_State L, int n )
 		{
-			lua_lock( L );
 			api_checknelems( L, n );
 			if ( n >= 2 )
 			{
@@ -1108,51 +980,42 @@ namespace KopiLua
 			}
 			else if ( n == 0 )
 			{  /* push empty string */
-				setsvalue2s( L, L.top, luaS_newlstr( L, "", 0 ) );
+				setsvalue2s( L, L.top, luaS_newstr( L, "" ) );
 				api_incr_top( L );
 			}
 			/* else n == 1; nothing to do */
-			lua_unlock( L );
 		}
 
 
-		public static void lua_newuserdata<T>( lua_State L, T obj )
+		public static void lua_pushuserdata<T>( lua_State L, T obj )
 		{
 			Udata u;
-			lua_lock( L );
 			luaC_checkGC( L );
 			u = luaS_newudata<T>( L, getcurrenv( L ), obj );
 			setuvalue( L, L.top, u );
 			api_incr_top( L );
-			lua_unlock( L );
 		}
 
 		public static object lua_newuserdata( lua_State L, uint size )
 		{
-			Udata u;
-			lua_lock( L );
 			luaC_checkGC( L );
-			u = luaS_newudata( L, size, getcurrenv( L ) );
+			Udata u = luaS_newudata( L, size, getcurrenv( L ) );
 			setuvalue( L, L.top, u );
 			api_incr_top( L );
-			lua_unlock( L );
 			return u.user_data;
 		}
 
 		// this one is used internally only
 		internal static object lua_newuserdata<T>( lua_State L )
 		{
-			Udata u;
-			lua_lock( L );
 			luaC_checkGC( L );
-			u = luaS_newudata<T>( L, getcurrenv( L ) );
+			Udata u = luaS_newudata<T>( L, getcurrenv( L ) );
 			setuvalue( L, L.top, u );
 			api_incr_top( L );
-			lua_unlock( L );
 			return u.user_data;
 		}
 
-		static CharPtr aux_upvalue( StkId fi, int n, ref TValue val )
+		static string aux_upvalue( StkId fi, int n, ref TValue val )
 		{
 			Closure f;
 			if ( !ttisfunction( fi ) ) return null;
@@ -1173,38 +1036,31 @@ namespace KopiLua
 		}
 
 
-		public static CharPtr lua_getupvalue( lua_State L, int funcindex, int n )
+		public static string lua_getupvalue( lua_State L, int funcindex, int n )
 		{
-			CharPtr name;
 			TValue val = new TValue();
-			lua_lock( L );
-			name = aux_upvalue( index2adr( L, funcindex ), n, ref val );
+			string name = aux_upvalue( index2adr( L, funcindex ), n, ref val );
 			if ( name != null )
 			{
 				setobj2s( L, L.top, val );
 				api_incr_top( L );
 			}
-			lua_unlock( L );
 			return name;
 		}
 
 
-		public static CharPtr lua_setupvalue( lua_State L, int funcindex, int n )
+		public static string lua_setupvalue( lua_State L, int funcindex, int n )
 		{
-			CharPtr name;
 			TValue val = new TValue();
-			StkId fi;
-			lua_lock( L );
-			fi = index2adr( L, funcindex );
+			StkId fi = index2adr( L, funcindex );
 			api_checknelems( L, 1 );
-			name = aux_upvalue( fi, n, ref val );
+			string name = aux_upvalue( fi, n, ref val );
 			if ( name != null )
 			{
 				StkId.dec( ref L.top );
 				setobj( L, val, L.top );
 				luaC_barrier( L, clvalue( fi ), L.top );
 			}
-			lua_unlock( L );
 			return name;
 		}
 

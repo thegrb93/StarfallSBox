@@ -54,9 +54,7 @@ namespace Starfall
 					Vector3 vec = Lua.lua_tovector(L, 1);
 					Lua.lua_pushangle(L, vec.EulerAngles);
 					return 1;
-				}),
-
-				new Lua.luaL_Reg(null, null)
+				})
 			} );
 			Lua.lua_pop( L, 1 );
 

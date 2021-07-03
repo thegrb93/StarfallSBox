@@ -415,15 +415,15 @@ namespace KopiLua
 			public TString()
 			{
 			}
-			public TString( CharPtr str ) { this.str = str; }
+			public TString( string str ) { this.str = str; }
 
-			public CharPtr str;
+			public string str;
 
-			public override string ToString() { return str.ToString(); } // for debugging
+			public override string ToString() { return str; } // for debugging
 		};
 
-		public static CharPtr getstr( TString ts ) { return ts.str; }
-		public static CharPtr svalue( StkId o ) { return getstr( rawtsvalue( o ) ); }
+		public static string getstr( TString ts ) { return ts.str; }
+		public static string svalue( StkId o ) { return getstr( rawtsvalue( o ) ); }
 
 		public class Udata_uv : GCObject
 		{
@@ -535,7 +535,7 @@ namespace KopiLua
 		public class ClosureType
 		{
 
-			ClosureHeader header;
+			readonly ClosureHeader header;
 
 			public static implicit operator ClosureHeader( ClosureType ctype ) { return ctype.header; }
 			public ClosureType( ClosureHeader header ) { this.header = header; }
@@ -799,58 +799,72 @@ namespace KopiLua
 				}
 		}
 
-		public static int luaO_str2d( CharPtr s, out lua_Number result )
+		public static int luaO_str2d( string s, out lua_Number result )
 		{
-			CharPtr endptr;
-			result = lua_str2number( s, out endptr );
-			if ( endptr == s ) return 0;  /* conversion failed */
-			if ( endptr[0] == 'x' || endptr[0] == 'X' )  /* maybe an hexadecimal constant? */
-				result = cast_num( strtoul( s, out endptr, 16 ) );
-			if ( endptr[0] == '\0' ) return 1;  /* most common case */
-			while ( isspace( endptr[0] ) ) endptr = endptr.next();
-			if ( endptr[0] != '\0' ) return 0;  /* invalid trailing characters? */
-			return 1;
+			s = s.Trim();
+			try
+			{
+				result = Convert.ToDouble( s );
+				return 1;
+			}
+			catch ( System.OverflowException )
+			{
+				if ( s[0] == '-' )
+					result = System.Double.NegativeInfinity;
+				else
+					result = System.Double.PositiveInfinity;
+				return 1;
+			}
+			catch( System.FormatException )
+			{
+				if ( s.Substring( 0, Math.Min( s.Length, 2 ) ) == "0x" )
+				{
+					try
+					{
+						result = int.Parse( s.Substring(2), System.Globalization.NumberStyles.HexNumber );
+						return 1;
+					}
+					catch ( System.FormatException )
+					{
+					}
+				}
+				result = 0;
+				return 0;
+			}
 		}
 
-
-
-		private static void pushstr( lua_State L, CharPtr str )
+		private static void pushstr( lua_State L, string str )
 		{
-			setsvalue2s( L, L.top, luaS_new( L, str ) );
+			setsvalue2s( L, L.top, luaS_newstr( L, str ) );
 			incr_top( L );
 		}
 
 
 		/* this function handles only `%d', `%c', %f, %p, and `%s' formats */
-		public static CharPtr luaO_pushvfstring( lua_State L, CharPtr fmt, params object[] argp )
+		public static string luaO_pushvfstring( lua_State L, string fmt, params object[] argp )
 		{
 			int parm_index = 0;
 			int n = 1;
+			int fmtindex = 0;
 			pushstr( L, "" );
 			for (; ; )
 			{
-				CharPtr e = strchr( fmt, '%' );
-				if ( e == null ) break;
-				setsvalue2s( L, L.top, luaS_newlstr( L, fmt, (uint)(e - fmt) ) );
+				int e = fmt.IndexOf( '%', fmtindex );
+				if ( e < 0 ) break;
+				setsvalue2s( L, L.top, luaS_newstr( L, fmt.Substring( fmtindex, e - fmtindex) ) );
 				incr_top( L );
-				switch ( e[1] )
+				switch ( fmt[e + 1] )
 				{
 					case 's':
 						{
 							object o = argp[parm_index++];
-							CharPtr s = o as CharPtr;
-							if ( s == null )
-								s = (string)o;
-							if ( s == null ) s = "(null)";
+							if ( o is not string s ) s = "(null)";
 							pushstr( L, s );
 							break;
 						}
 					case 'c':
 						{
-							CharPtr buff = new char[2];
-							buff[0] = (char)(int)argp[parm_index++];
-							buff[1] = '\0';
-							pushstr( L, buff );
+							pushstr( L, ((char)(int)argp[parm_index++]).ToString() );
 							break;
 						}
 					case 'd':
@@ -867,10 +881,7 @@ namespace KopiLua
 						}
 					case 'p':
 						{
-							//CharPtr buff = new char[4*sizeof(void *) + 8]; /* should be enough space for a `%p' */
-							CharPtr buff = new char[32];
-							sprintf( buff, "0x%08x", argp[parm_index++].GetHashCode() );
-							pushstr( L, buff );
+							pushstr( L, "0x" + argp[parm_index++].GetHashCode().ToString( "X8" ) );
 							break;
 						}
 					case '%':
@@ -880,67 +891,64 @@ namespace KopiLua
 						}
 					default:
 						{
-							CharPtr buff = new char[3];
-							buff[0] = '%';
-							buff[1] = e[1];
-							buff[2] = '\0';
-							pushstr( L, buff );
+							pushstr( L, "%"+ fmt[e + 1] );
 							break;
 						}
 				}
 				n += 2;
-				fmt = e + 2;
+				fmtindex = e + 2;
 			}
-			pushstr( L, fmt );
+			pushstr( L, fmt.Substring( Math.Min( fmt.Length, fmtindex ) ) );
 			luaV_concat( L, n + 1, cast_int( L.top - L.base_ ) - 1 );
 			L.top -= n;
 			return svalue( L.top - 1 );
 		}
 
-		public static CharPtr luaO_pushfstring( lua_State L, CharPtr fmt, params object[] args )
+		public static string luaO_pushfstring( lua_State L, string fmt, params object[] args )
 		{
 			return luaO_pushvfstring( L, fmt, args );
 		}
 
 
-		public static void luaO_chunkid( CharPtr out_, CharPtr source, uint bufflen )
+		public static string luaO_chunkid( string source, int bufflen )
 		{
-			//out_ = "";
 			if ( source[0] == '=' )
 			{
-				strncpy( out_, source + 1, (int)bufflen );  /* remove first char */
-				out_[bufflen - 1] = '\0';  /* ensures null termination */
+				return source.Substring( 1 );
 			}
 			else
 			{  /* out = "source", or "...source" */
 				if ( source[0] == '@' )
 				{
-					uint l;
-					source = source.next();  /* skip the `@' */
-					bufflen -= (uint)(" '...' ".Length + 1);
-					l = (uint)strlen( source );
-					strcpy( out_, "" );
+					string dots = " '...' ";
+					int l = source.Length - 1;
+					int sourceindex = 1;
+					bufflen -= dots.Length + 1;
+					StringBuilder sb = new StringBuilder();
 					if ( l > bufflen )
 					{
-						source += (l - bufflen);  /* get last part of file name */
-						strcat( out_, "..." );
+						sourceindex += (l - bufflen);  /* get last part of file name */
+						sb.Append( "..." );
 					}
-					strcat( out_, source );
+					sb.Append( source.Substring( sourceindex ) );
+					return sb.ToString();
 				}
 				else
 				{  /* out = [string "string"] */
-					uint len = strcspn( source, "\n\r" );  /* stop at first newline */
-					bufflen -= (uint)(" [string \"...\"] ".Length + 1);
+					int len = source.IndexOfAny( "\n\r".ToCharArray() );  /* stop at first newline */
+					bufflen -= " [string \"...\"] ".Length + 1;
 					if ( len > bufflen ) len = bufflen;
-					strcpy( out_, "[string \"" );
-					if ( source[len] != '\0' )
+					StringBuilder sb = new StringBuilder();
+					sb.Append( "[string \"" );
+					if ( len > 0 )
 					{  /* must truncate? */
-						strncat( out_, source, (int)len );
-						strcat( out_, "..." );
+						sb.Append( source.Substring( 0, len - 1 ) );
+						sb.Append( "..." );
 					}
 					else
-						strcat( out_, source );
-					strcat( out_, "\"]" );
+						sb.Append( source );
+					sb.Append( "\"]" );
+					return sb.ToString();
 				}
 			}
 		}

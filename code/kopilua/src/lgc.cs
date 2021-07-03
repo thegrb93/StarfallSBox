@@ -292,8 +292,8 @@ namespace KopiLua
 			mode = gfasttm( g, h.metatable, TMS.TM_MODE );
 			if ( (mode != null) && ttisstring( mode ) )
 			{  /* is there a weak mode? */
-				weakkey = (strchr( svalue( mode ), 'k' ) != null) ? 1 : 0;
-				weakvalue = (strchr( svalue( mode ), 'v' ) != null) ? 1 : 0;
+				weakkey = svalue( mode ).Contains( 'k' ) ? 1 : 0;
+				weakvalue = svalue( mode ).Contains( 'v' ) ? 1 : 0;
 				if ( (weakkey != 0) || (weakvalue != 0) )
 				{  /* is really weak? */
 					h.marked &= (byte)~(KEYWEAK | VALUEWEAK);  /* clear bits */
