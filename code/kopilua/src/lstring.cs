@@ -113,12 +113,12 @@ namespace KopiLua
 		}
 
 
-		public static Udata luaS_newudata( lua_State L, uint s, Table e )
+		public static Udata luaS_newudata( lua_State L, int s, Table e )
 		{
 			Udata u = new Udata();
 			u.uv.marked = luaC_white( G( L ) );  /* is not finalized */
 			u.uv.tt = LUA_TUSERDATA;
-			u.uv.len = s;
+			u.uv.len = (uint)s;
 			u.uv.metatable = null;
 			u.uv.env = e;
 			u.user_data = new byte[s];
@@ -129,22 +129,7 @@ namespace KopiLua
 			return u;
 		}
 
-		internal static Udata luaS_newudata<T>( lua_State L, Table e )
-		{
-			Udata u = new Udata();
-			u.uv.marked = luaC_white( G( L ) );  /* is not finalized */
-			u.uv.tt = LUA_TUSERDATA;
-			u.uv.len = 0;
-			u.uv.metatable = null;
-			u.uv.env = e;
-			u.user_data = luaM_realloc_<T>( L );
-			/* chain it on udata list (after main thread) */
-			u.uv.next = G( L ).mainthread.next;
-			G( L ).mainthread.next = obj2gco( u );
-			return u;
-		}
-
-		internal static Udata luaS_newudata<T>( lua_State L, Table e, T obj )
+		internal static Udata luaS_newudata( lua_State L, Table e, object obj )
 		{
 			Udata u = new Udata();
 			u.uv.marked = luaC_white( G( L ) );  /* is not finalized */

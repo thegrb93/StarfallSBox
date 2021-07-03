@@ -987,29 +987,19 @@ namespace KopiLua
 		}
 
 
-		public static void lua_pushuserdata<T>( lua_State L, T obj )
+		public static void lua_pushuserdata( lua_State L, object obj )
 		{
 			Udata u;
 			luaC_checkGC( L );
-			u = luaS_newudata<T>( L, getcurrenv( L ), obj );
+			u = luaS_newudata( L, getcurrenv( L ), obj );
 			setuvalue( L, L.top, u );
 			api_incr_top( L );
 		}
 
-		public static object lua_newuserdata( lua_State L, uint size )
+		public static object lua_newuserdata( lua_State L, int size )
 		{
 			luaC_checkGC( L );
 			Udata u = luaS_newudata( L, size, getcurrenv( L ) );
-			setuvalue( L, L.top, u );
-			api_incr_top( L );
-			return u.user_data;
-		}
-
-		// this one is used internally only
-		internal static object lua_newuserdata<T>( lua_State L )
-		{
-			luaC_checkGC( L );
-			Udata u = luaS_newudata<T>( L, getcurrenv( L ) );
 			setuvalue( L, L.top, u );
 			api_incr_top( L );
 			return u.user_data;
